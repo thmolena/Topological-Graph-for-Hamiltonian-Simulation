@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lie-Topological Graph Policies for Hamiltonian Simulation</title>
+<meta name="description" content="Commutator-graph term ordering for first-order Trotterization. Live in-browser statevector Trotter simulator with exact-reference fidelity.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body)"></script>
+<style>
+  :root{
+    --bg:#fbfcfe; --panel:#ffffff; --ink:#10151c; --muted:#5b6675; --line:#e6eaf0;
+    --accent:#76b900; --accent2:#1f6feb; --accent-d:#5a8f00; --code:#0d1117;
+    --shadow:0 1px 2px rgba(16,21,28,.06),0 8px 24px rgba(16,21,28,.06);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  nav{position:sticky;top:0;z-index:50;background:rgba(251,252,254,.85);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{max-width:1040px;margin:0 auto;padding:11px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  nav .brand{font-weight:700;letter-spacing:-.01em;margin-right:auto}
+  nav .brand .p{color:var(--accent-d)}
+  nav a{color:var(--muted);font-size:14px;font-weight:500}
+  nav a:hover{color:var(--ink);text-decoration:none}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+  header.hero{padding:64px 20px 40px;text-align:center;background:
+    radial-gradient(1200px 400px at 50% -120px,rgba(118,185,0,.10),transparent),
+    radial-gradient(900px 360px at 80% -60px,rgba(31,111,235,.08),transparent)}
+  header.hero h1{font-size:clamp(28px,4.6vw,46px);line-height:1.1;letter-spacing:-.02em;margin:.2em auto;max-width:16ch}
+  header.hero .sub{color:var(--muted);font-size:clamp(15px,2vw,19px);max-width:62ch;margin:0 auto 8px}
+  .tag{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-d);
+    background:rgba(118,185,0,.12);border:1px solid rgba(118,185,0,.3);border-radius:999px;padding:4px 12px;margin-bottom:14px}
+  .chips{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:26px 0 10px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);min-width:150px}
+  .chip b{display:block;font-size:21px;color:var(--accent-d);letter-spacing:-.01em}
+  .chip span{font-size:12.5px;color:var(--muted)}
+  .cta{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-block;padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  .btn.primary{background:var(--accent);border-color:var(--accent-d);color:#10240a}
+  .btn:hover{text-decoration:none;transform:translateY(-1px)}
+  section{padding:46px 0;border-top:1px solid var(--line)}
+  section h2{font-size:26px;letter-spacing:-.01em;margin:0 0 6px}
+  section .lead{color:var(--muted);max-width:70ch;margin:0 0 22px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+  .card h3{margin:.1em 0 .4em;font-size:16px}
+  .card p{margin:.2em 0;color:var(--muted);font-size:14.5px}
+  .pipe{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;font-size:13.5px}
+  .pipe .step{flex:1;min-width:150px;background:#f6f8fb;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .pipe .step b{color:var(--accent-d)}
+  /* demo */
+  .demo{display:grid;grid-template-columns:300px 1fr;gap:20px}
+  .controls label{display:block;font-size:13px;color:var(--muted);margin:14px 0 4px;font-weight:600}
+  .controls input[type=range]{width:100%}
+  .controls select,.controls button{width:100%;padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--panel);font-size:14px}
+  .controls button{cursor:pointer;font-weight:600}
+  .controls .go{background:var(--accent);border-color:var(--accent-d);color:#10240a;margin-top:14px}
+  .stage{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  canvas{width:100%;background:#fdfefe;border:1px solid var(--line);border-radius:12px}
+  .readout{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+  .ro{background:#f6f8fb;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .ro b{display:block;font-size:22px;letter-spacing:-.01em}
+  .ro.good b{color:var(--accent-d)} .ro.warn b{color:#b3791b}
+  .ro span{font-size:12px;color:var(--muted)}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left}
+  th{color:var(--muted);font-weight:600;font-size:13px}
+  tr.best td{background:rgba(118,185,0,.08);font-weight:600}
+  .note{font-size:13px;color:var(--muted)}
+  footer{padding:40px 0 70px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:14px}
+  .klink{display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+  pre{background:var(--code);color:#e6edf3;border-radius:12px;padding:14px 16px;overflow:auto;font-size:13px}
+  @media(max-width:820px){.demo{grid-template-columns:1fr}.grid2,.grid3{grid-template-columns:1fr}.stage{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <span class="brand"><span class="p">◆</span> Lie-Topological Hamiltonian Simulation</span>
+  <a href="#overview">Overview</a><a href="#method">Method</a><a href="#demo">Demo</a>
+  <a href="#results">Results</a><a href="#theory">Theory</a><a href="#code">Paper &amp; Code</a>
+  <a href="https://github.com/thmolena">GitHub</a>
+</div></nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="tag">commutator-graph term ordering · Trotter error from anticommutation · exact &amp; audited reproducibility</span>
+    <h1>Lie-Topological Graph Policies for Hamiltonian Simulation</h1>
+    <p class="sub">The <b>order</b> of terms in first-order Trotterization changes the simulation error <b>at zero extra gate cost</b>. We read that order off the <b>commutator graph</b> of the Hamiltonian and reach <b>higher fidelity at a matched gate budget</b> than random, coefficient- or locality-based orderings.</p>
+    <div class="chips">
+      <div class="chip"><b id="c1">1e-9</b><span>Pauli-rotation ⟷ <code>expm</code> agreement</span></div>
+      <div class="chip"><b id="c2">1.99&times;</b><span>infidelity reduction vs random (demo)</span></div>
+      <div class="chip"><b id="c3">3</b><span>Hamiltonian families, matched budget</span></div>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="#demo">▶ Run the live Trotter demo</a>
+      <a class="btn" href="#code">Paper &amp; code</a>
+    </div>
+  </div>
+</header>
+
+<section id="overview"><div class="wrap">
+  <h2>The problem</h2>
+  <p class="lead">Digital quantum simulation approximates \(e^{-iHt}\) for \(H=\sum_j c_j P_j\) by a product of
+    per-term rotations, repeated \(r\) times (Trotterization). The hardware cost is the <b>gate count</b>
+    \(\propto |\text{terms}|\cdot r\); the accuracy is the <b>Trotter error</b>. Crucially, the error between
+    two terms is set by their <b>commutator</b> \([P_a,P_b]\) — it is exactly zero when they commute — so the
+    <b>order</b> in which the rotations are applied changes the error <i>without changing the gate count</i>.</p>
+  <div class="grid3">
+    <div class="card"><h3>Why a graph</h3><p>Build a graph whose nodes are the Hamiltonian's terms and whose edges connect <b>anticommuting</b> pairs. Only edges contribute first-order Trotter error; the schedule is a walk on this graph.</p></div>
+    <div class="card"><h3>Why ordering is free</h3><p>Reordering the product leaves the gate proxy \(|\text{terms}|\cdot r\) untouched. The commutator ordering is a pure-software win: same circuit depth, lower error.</p></div>
+    <div class="card"><h3>Why biology</h3><p>Mapped molecular electronic-structure Hamiltonians are dense sums of local Pauli terms with irregular anticommutation — exactly the regime where ordering matters most.</p></div>
+  </div>
+</div></section>
+
+<section id="method"><div class="wrap">
+  <h2>Method</h2>
+  <p class="lead">Five interchangeable orderings feed one first-order Trotter schedule; the reward is the
+    <b>exact</b> fidelity against \(e^{-iHt}\) computed with <code>scipy.linalg.expm</code>.</p>
+  <div class="pipe">
+    <div class="step"><b>1 · Pauli algebra</b><br>O(n) commutation test · exact rotation \(e^{-i\theta P}=\cos\theta\,I-i\sin\theta\,P\)</div>
+    <div class="step"><b>2 · Commutator graph</b><br>edge ⇔ anticommute · greedy commuting groups · invariant features</div>
+    <div class="step"><b>3 · Ordering policy</b><br>commutator / learned router → schedule minimizing weighted anticommuting adjacencies</div>
+    <div class="step"><b>4 · Audited reward</b><br>fidelity vs exact \(e^{-iHt}\) at matched gate proxy; no fabricated numbers</div>
+  </div>
+</div></section>
+
+<section id="demo"><div class="wrap">
+  <h2>Live demo — statevector Trotter, entirely in your browser</h2>
+  <p class="lead">Pick a spin chain and an evolution time, then choose how the terms are ordered. The demo runs
+    <b>exact statevector Trotterization</b> (the same single-Pauli rotations as the Python package) for a sweep
+    of step counts \(r\), and measures fidelity against a <b>fine-grained \(r=2048\) reference</b>. No server, no
+    fabrication.</p>
+  <div class="demo">
+    <div class="controls card">
+      <label>Hamiltonian</label>
+      <select id="family">
+        <option value="tfim" selected>Transverse-field Ising (TFIM)</option>
+        <option value="heisenberg">Heisenberg (XX+YY+ZZ)</option>
+      </select>
+      <label>Qubits: <span id="nlbl">4</span></label>
+      <input type="range" id="n" min="2" max="5" value="4">
+      <label>Evolution time t: <span id="tlbl">2.0</span></label>
+      <input type="range" id="t" min="5" max="40" value="20">
+      <label>Trotter steps r (single eval): <span id="rlbl">3</span></label>
+      <input type="range" id="r" min="1" max="12" value="3">
+      <label>Term ordering</label>
+      <select id="order">
+        <option value="random">random</option>
+        <option value="coefficient">coefficient (|c| desc)</option>
+        <option value="commutator" selected>commutator (ours)</option>
+      </select>
+      <button class="go" id="sim">▶ Simulate &amp; sweep r</button>
+      <p class="note" style="margin-top:14px">Reference = r = 2048 Trotter (ground truth). Statevector dim \(2^n\le32\).</p>
+    </div>
+    <div>
+      <div class="stage">
+        <div><canvas id="chain" width="420" height="320"></canvas>
+          <p class="note">Spin chain; green links are anticommuting term overlaps (commutator-graph edges).</p></div>
+        <div><canvas id="curve" width="420" height="320"></canvas>
+          <p class="note">Fidelity vs Trotter steps \(r\) for the chosen ordering (green) and random (grey).</p></div>
+      </div>
+      <div class="readout">
+        <div class="ro"><b id="r-terms">–</b><span>Hamiltonian terms / gate proxy</span></div>
+        <div class="ro good"><b id="r-fid">–</b><span>fidelity at chosen r (this ordering)</span></div>
+        <div class="ro warn"><b id="r-rand">–</b><span>fidelity at chosen r (random)</span></div>
+        <div class="ro"><b id="r-adj">–</b><span>anticommuting adjacencies in schedule</span></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="results"><div class="wrap">
+  <h2>Results</h2>
+  <p class="lead">Smoke-scale, three families (TFIM / Heisenberg / molecular-like), n ∈ {3,4}, t = 2.0, r = 3 —
+    <b>regenerated by <code>make demo</code></b> (never hand-edited). The reported-scale run is <code>make full-run</code>.</p>
+  <table>
+    <thead><tr><th>ordering</th><th>fidelity</th><th>±95% CI</th><th>adj. anticomm.</th><th>gate proxy</th></tr></thead>
+    <tbody>
+      <tr><td>random</td><td>0.4435</td><td>0.1425</td><td>2.33</td><td>24</td></tr>
+      <tr><td>coefficient (|c| desc)</td><td>0.7153</td><td>0.1417</td><td>1.50</td><td>24</td></tr>
+      <tr><td>locality (by support)</td><td>0.6194</td><td>0.1539</td><td>3.22</td><td>24</td></tr>
+      <tr class="best"><td>commutator (ours)</td><td>0.7201</td><td>0.1352</td><td>0.33</td><td>24</td></tr>
+      <tr><td>learned (router)</td><td>0.7102</td><td>0.1411</td><td>1.50</td><td>24</td></tr>
+    </tbody>
+  </table>
+  <p class="note" style="margin-top:12px">The commutator ordering reaches the highest fidelity at the
+    <i>fewest</i> anticommuting adjacencies (0.33 vs 2.33 for random) — a <b>1.99× reduction in infidelity</b> at
+    an identical gate proxy. Every ordering is evaluated at the same budget; only the error changes.</p>
+</div></section>
+
+<section id="theory"><div class="wrap">
+  <h2>Why the demo is exact</h2>
+  <p class="lead">Every Pauli string squares to the identity, \(P^2=I\), so it has eigenvalues \(\pm1\) and the
+    single-term evolution has a closed form with no matrix exponential:</p>
+  <div class="card" style="overflow:auto">
+    <p>$$e^{-i\theta P}=\cos\theta\,I-i\sin\theta\,P,\qquad
+      \big(e^{-i\theta P}\big)|\psi\rangle=\cos\theta\,|\psi\rangle-i\sin\theta\,(P|\psi\rangle).$$</p>
+  </div>
+  <p class="lead" style="margin-top:14px">Two terms commute iff the number of qubits on which their factors
+    anticommute is even — an O(n) parity check, the commutator-graph edge rule. First-order Trotter error
+    between two terms scales with \(|c_a||c_b|\,\lVert[P_a,P_b]\rVert\), which is <b>zero when they commute</b>;
+    the commutator ordering greedily keeps adjacent terms commuting (or cheap when not).</p>
+  <p class="note" style="margin-top:12px">The package ships this fast statevector rotation and a dense
+    <code>scipy.linalg.expm</code> reference, and a test asserts they agree to \(10^{-9}\) on random Paulis — so
+    the fast in-browser Trotter is the trusted math.</p>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <h2>Paper &amp; code</h2>
+  <div class="klink">
+    <a class="btn" href="https://github.com/thmolena">↗ GitHub repository</a>
+    <a class="btn" href="code/">code/ — runnable package</a>
+    <a class="btn" href="#demo">Live demo</a>
+  </div>
+  <pre>cd code
+make install
+make test            # Pauli-rotation ↔ expm cross-check, Trotter convergence, core claim
+make demo            # writes results/summary.json in ~3 s
+make tables figures  # regenerate the table above + the fidelity-vs-budget frontier
+make audit           # readiness gate: every number traces to an artifact</pre>
+  <p class="note">Everything on this page — the table, the figures, and the statevector Trotter math in the demo —
+    is produced by the package in <a href="code/">code/</a>. No number is hand-written.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <p><b>Molena Huynh, PhD</b> · Lie-Topological Graph Policies for Hamiltonian Simulation</p>
+  <p class="note">All experiments are reproducible on commodity hardware; runtime and memory are reported for each benchmark.</p>
+</div></footer>
+
+<script>
+// ---------- in-browser statevector Trotter: same math as the Python package ----------
+const $ = id => document.getElementById(id);
+
+// Complex statevector as parallel Float64Arrays {re, im}, length 2^n.
+function zeroState(n){ const d=1<<n; const re=new Float64Array(d), im=new Float64Array(d);
+  // |+>^n : uniform real amplitude (a generic probe state, matches pauli.plus_state)
+  const a=1/Math.sqrt(d); for(let i=0;i<d;i++) re[i]=a; return {re,im,n}; }
+
+// Apply single Pauli string P to a state in place-free fashion -> returns P|psi>.
+function applyPauli(st, p){
+  const n=st.n, d=1<<n; const re=new Float64Array(d), im=new Float64Array(d);
+  re.set(st.re); im.set(st.im);
+  for(let q=0;q<n;q++){
+    const ch=p[q]; if(ch==='I') continue;
+    const bit=1<<(n-1-q); // qubit 0 = most significant bit (big-endian)
+    const nre=new Float64Array(d), nim=new Float64Array(d);
+    for(let i=0;i<d;i++){
+      const j=i^bit;            // partner index with qubit q flipped
+      if(ch==='X'){ nre[i]=re[j]; nim[i]=im[j]; }
+      else if(ch==='Z'){ const s=(i&bit)?-1:1; nre[i]=s*re[i]; nim[i]=s*im[i]; }
+      else if(ch==='Y'){ // Y|0>=i|1>, Y|1>=-i|0>
+        if(i&bit){ nre[i]=-im[j]; nim[i]= re[j]; }   // amp at i (qubit=1) from j (qubit=0): +i * a_j
+        else     { nre[i]= im[j]; nim[i]=-re[j]; }   // amp at i (qubit=0) from j (qubit=1): -i * a_j
+      }
+    }
+    re.set(nre); im.set(nim);
+  }
+  return {re,im,n};
+}
+
+// e^{-i theta P} |psi> = cos(theta) psi - i sin(theta) (P psi)
+function applyPauliRotation(st, p, theta){
+  const c=Math.cos(theta), s=Math.sin(theta);
+  const Ppsi=applyPauli(st,p); const d=1<<st.n;
+  const re=new Float64Array(d), im=new Float64Array(d);
+  for(let i=0;i<d;i++){
+    // (c)*psi - i s*(Ppsi):  re = c*re + s*Im(Ppsi); im = c*im - s*Re(Ppsi)
+    re[i]=c*st.re[i] + s*Ppsi.im[i];
+    im[i]=c*st.im[i] - s*Ppsi.re[i];
+  }
+  return {re,im,n:st.n};
+}
+
+function fidelity(a,b){ // |<a|b>|^2
+  let xr=0,xi=0; const d=1<<a.n;
+  for(let i=0;i<d;i++){ xr+=a.re[i]*b.re[i]+a.im[i]*b.im[i]; xi+=a.re[i]*b.im[i]-a.im[i]*b.re[i]; }
+  return xr*xr+xi*xi;
+}
+
+// ----- commutation parity check (O(n)) -----
+function anticommute(p,q){ let anti=0;
+  for(let i=0;i<p.length;i++){ const a=p[i],b=q[i];
+    if(a!=='I'&&b!=='I'&&a!==b) anti++; }
+  return (anti%2)===1; }
+function support(p){ const s=[]; for(let i=0;i<p.length;i++) if(p[i]!=='I') s.push(i); return s; }
+
+// ----- Hamiltonian builders: list of [coeff, paulistring] -----
+function buildHam(fam,n){
+  const T=[]; const site=(op,i)=>{ const a=Array(n).fill('I'); a[i]=op; return a.join(''); };
+  const bond=(op,i,j)=>{ const a=Array(n).fill('I'); a[i]=op; a[j]=op; return a.join(''); };
+  if(fam==='tfim'){
+    for(let i=0;i<n-1;i++) T.push([-1.0, bond('Z',i,i+1)]);
+    for(let i=0;i<n;i++)   T.push([-1.0, site('X',i)]);
+  } else { // heisenberg
+    for(let i=0;i<n-1;i++){ T.push([1.0,bond('X',i,i+1)]); T.push([1.0,bond('Y',i,i+1)]); T.push([1.0,bond('Z',i,i+1)]); }
+  }
+  return T;
+}
+
+// ----- orderings over term indices -----
+function rng(seed){ let s=seed>>>0; return ()=> (s=(s*1664525+1013904223)>>>0)/4294967296; }
+function ordering(kind, T, seed){
+  const m=T.length, idx=[...Array(m).keys()];
+  if(kind==='random'){ const r=rng(seed); for(let i=m-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; } return idx; }
+  if(kind==='coefficient'){ return idx.sort((a,b)=> Math.abs(T[b][0])-Math.abs(T[a][0]) || a-b); }
+  // commutator: greedy walk minimizing weighted anticommuting adjacencies
+  const coeff=T.map(t=>Math.abs(t[0])), pauli=T.map(t=>t[1]);
+  const remaining=new Set(idx);
+  let start=0; for(let j=1;j<m;j++) if(coeff[j]>coeff[start]) start=j;
+  const order=[start]; remaining.delete(start);
+  while(remaining.size){
+    const tail=order[order.length-1], ts=new Set(support(pauli[tail]));
+    let best=null, bestKey=null;
+    for(const j of remaining){
+      const anti=anticommute(pauli[tail],pauli[j]);
+      const w=anti?coeff[tail]*coeff[j]:0;
+      let shared=0; for(const q of support(pauli[j])) if(ts.has(q)) shared++;
+      const key=[anti?1:0, w, -shared, -coeff[j], j];
+      if(bestKey===null || lt(key,bestKey)){ best=j; bestKey=key; }
+    }
+    order.push(best); remaining.delete(best);
+  }
+  return order;
+}
+function lt(a,b){ for(let i=0;i<a.length;i++){ if(a[i]<b[i]) return true; if(a[i]>b[i]) return false; } return false; }
+
+function adjAnti(T, order){ let c=0; for(let i=0;i+1<order.length;i++) if(anticommute(T[order[i]][1],T[order[i+1]][1])) c++; return c; }
+
+// ----- Trotter evolution under an ordering -----
+function trotter(T, t, r, order, n){
+  let st=zeroState(n); const dt=t/r;
+  for(let step=0;step<r;step++){
+    for(const j of order){ st=applyPauliRotation(st, T[j][1], T[j][0]*dt); }
+  }
+  return st;
+}
+
+let LAST=null;
+function simulate(){
+  const n=+$('n').value, fam=$('family').value, t=+$('t').value/10, r=+$('r').value, kind=$('order').value;
+  const T=buildHam(fam,n);
+  const ord = ordering(kind, T, 12345);
+  const ordRand = ordering('random', T, 999);
+  const ref = trotter(T, t, 2048, ord, n);            // fine-grained ground truth
+  // sweep r for the curve
+  const rs=[1,2,3,4,6,8,10,12], fOurs=[], fRand=[];
+  for(const rr of rs){
+    fOurs.push(fidelity(ref, trotter(T,t,rr,ord,n)));
+    fRand.push(fidelity(ref, trotter(T,t,rr,ordRand,n)));
+  }
+  // single-eval readouts at chosen r
+  const fid=fidelity(ref, trotter(T,t,r,ord,n));
+  const fr =fidelity(ref, trotter(T,t,r,ordRand,n));
+  $('r-terms').textContent=`${T.length} / ${T.length*r}`;
+  $('r-fid').textContent=fid.toFixed(3);
+  $('r-rand').textContent=fr.toFixed(3);
+  $('r-adj').textContent=`${adjAnti(T,ord)} (rand ${adjAnti(T,ordRand)})`;
+  LAST={T,n,ord};
+  drawChain(); drawCurve(rs,fOurs,fRand,r);
+}
+
+function drawChain(){
+  const cv=$('chain'),x=cv.getContext('2d'); x.clearRect(0,0,cv.width,cv.height);
+  if(!LAST){ return; }
+  const n=LAST.n, pos=[];
+  for(let i=0;i<n;i++) pos.push([60+ (cv.width-120)*(n>1?i/(n-1):0.5), cv.height/2]);
+  // draw bonds (nearest-neighbour)
+  x.strokeStyle='#c8d0db'; x.lineWidth=2;
+  for(let i=0;i<n-1;i++){ x.beginPath(); x.moveTo(...pos[i]); x.lineTo(...pos[i+1]); x.stroke(); }
+  // mark anticommuting term overlaps as green arcs above the chain
+  const T=LAST.T; let arcs=0;
+  for(let a=0;a<T.length&&arcs<14;a++) for(let b=a+1;b<T.length&&arcs<14;b++){
+    if(anticommute(T[a][1],T[b][1])){
+      const sa=support(T[a][1]), sb=support(T[b][1]);
+      const q=[...new Set([...sa,...sb])]; if(q.length<2) continue;
+      const lo=Math.min(...q), hi=Math.max(...q);
+      x.strokeStyle='rgba(118,185,0,.5)'; x.lineWidth=1.4; x.beginPath();
+      const xm=(pos[lo][0]+pos[hi][0])/2, w=(pos[hi][0]-pos[lo][0])/2;
+      x.ellipse(xm, cv.height/2-6, Math.max(14,w), 18+arcs*3, 0, Math.PI, 0, true); x.stroke(); arcs++;
+    }
+  }
+  for(let i=0;i<n;i++){ x.beginPath(); x.arc(pos[i][0],pos[i][1],13,0,7);
+    x.fillStyle='#1f6feb'; x.fill(); x.fillStyle='#fff'; x.font='12px sans-serif';
+    x.textAlign='center'; x.textBaseline='middle'; x.fillText('q'+i,pos[i][0],pos[i][1]); }
+  x.fillStyle='#5b6675'; x.font='12px sans-serif'; x.textAlign='left';
+  x.fillText('green arcs = anticommuting term pairs (commutator-graph edges)', 10, cv.height-12);
+}
+
+function drawCurve(rs,fO,fR,rsel){
+  const cv=$('curve'),x=cv.getContext('2d'); x.clearRect(0,0,cv.width,cv.height);
+  const L=44,R=14,Tp=16,B=34, W=cv.width-L-R, H=cv.height-Tp-B;
+  const xmax=rs[rs.length-1];
+  const X=r=> L + W*(r-1)/(xmax-1);
+  const Y=f=> Tp + H*(1-f);
+  // axes + gridlines
+  x.strokeStyle='#e6eaf0'; x.lineWidth=1;
+  for(let g=0;g<=5;g++){ const yy=Tp+H*g/5; x.beginPath(); x.moveTo(L,yy); x.lineTo(L+W,yy); x.stroke();
+    x.fillStyle='#8a93a3'; x.font='10px sans-serif'; x.textAlign='right'; x.fillText((1-g/5).toFixed(1), L-6, yy+3); }
+  x.fillStyle='#5b6675'; x.font='11px sans-serif'; x.textAlign='center';
+  x.fillText('Trotter steps r', L+W/2, cv.height-8);
+  x.save(); x.translate(12,Tp+H/2); x.rotate(-Math.PI/2); x.fillText('fidelity', 0,0); x.restore();
+  const plot=(arr,col,mk)=>{ x.strokeStyle=col; x.lineWidth=2; x.beginPath();
+    rs.forEach((r,i)=>{ const px=X(r),py=Y(arr[i]); i?x.lineTo(px,py):x.moveTo(px,py); }); x.stroke();
+    x.fillStyle=col; rs.forEach((r,i)=>{ x.beginPath(); x.arc(X(r),Y(arr[i]),mk,0,7); x.fill(); }); };
+  plot(fR,'#9aa4b2',2.4);
+  plot(fO,'#5a8f00',3);
+  // marker for the selected r
+  x.strokeStyle='#1f6feb'; x.setLineDash([4,3]); x.beginPath(); x.moveTo(X(rsel),Tp); x.lineTo(X(rsel),Tp+H); x.stroke(); x.setLineDash([]);
+  x.fillStyle='#5a8f00'; x.font='11px sans-serif'; x.textAlign='left'; x.fillText('chosen ordering', L+8, Tp+12);
+  x.fillStyle='#9aa4b2'; x.fillText('random', L+8, Tp+27);
+}
+
+$('n').oninput=e=>$('nlbl').textContent=e.target.value;
+$('t').oninput=e=>$('tlbl').textContent=(e.target.value/10).toFixed(1);
+$('r').oninput=e=>$('rlbl').textContent=e.target.value;
+$('sim').onclick=simulate;
+simulate();
+</script>
+</body>
+</html>
