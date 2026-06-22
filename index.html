@@ -110,7 +110,7 @@
     <h1>Commutator-Graph Term Ordering Reduces First-Order Trotter Error at a Fixed Gate Budget</h1>
     <p class="sub">The <b>order</b> of the per-term rotations in a first-order Lie&ndash;Trotter product formula is a
       <b>free parameter</b>: it changes the algorithmic error but not the gate count. We read an ordering off the
-      <b>commutator (anticommutation) graph</b> of \(H=\sum_j c_j P_j\) and report&mdash;honestly, with confidence
+      <b>commutator (anticommutation) graph</b> of \(H=\sum_j c_j P_j\) and report&mdash;transparently, with confidence
       intervals&mdash;exactly how large and how robust the effect is against exact statevector references.</p>
     <div class="chips">
       <div class="chip"><b>0.548 &plusmn; 0.068</b><span>commutator-ordered fidelity (95% CI, n=120)</span></div>
@@ -124,7 +124,7 @@
       <a class="btn" href="#code">Paper &amp; code</a>
     </div>
     <p class="note" style="margin-top:16px;max-width:70ch;margin-left:auto;margin-right:auto">
-      A controlled, fully reproducible demonstration that term ordering is a real, no-cost lever on Trotter error.
+      A controlled, fully reproducible demonstration that term ordering is a genuine, zero-cost mechanism on Trotter error.
       Not a claim of hardware advantage: first-order only, \(n\le 8\), synthetic/structured Hamiltonians, classical CPU simulation.</p>
   </div>
 </header>
@@ -142,9 +142,9 @@
       in which the rotations are applied.</p></div>
     <div class="card"><h3>Error is order-dependent</h3><p>The leading correction is a sum over commutators
       \([c_aP_a,c_bP_b]\), which <b>vanishes for any commuting pair</b> and is sensitive to which non-commuting
-      terms sit adjacently in the product. Ordering is therefore a free knob.</p></div>
+      terms sit adjacently in the product. Ordering is therefore a cost-free control parameter.</p></div>
     <div class="card"><h3>The precise gap</h3><p>Ordering sensitivity has been observed empirically in chemistry
-      Trotterization, but without a graph-centric formalization, a matched-cost exact evaluation, and an honest,
+      Trotterization, but without a graph-centric formalization, a matched-cost exact evaluation, and an transparent,
       statistically reported quantification of how large and how robust the effect is.</p></div>
   </div>
   <p class="callout">Unlike higher-order formulas, randomized compilation, or step-size selection&mdash;which change
@@ -156,7 +156,7 @@
 
 <!-- ===================== TUTORIAL FOR TECHNICAL HIRING READERS ===================== -->
 <section id="tutorial"><div class="wrap">
-  <h2>Tutorial for non-specialist technical readers</h2>
+  <h2>Tutorial and primer for research scientists</h2>
   <p class="lead">Hamiltonian simulation approximates \(e^{-iHt}\) by applying one small rotation per Pauli term.
     The number of rotations is fixed once \(L\), \(r\), and the Hamiltonian are fixed, but the order of those rotations
     is still a design choice. This project asks how much fidelity can be recovered by choosing that order from the
@@ -168,27 +168,27 @@
   </div>
   <div class="grid2" style="margin-top:16px">
     <div class="card"><h3>Statistical highlight</h3><p>The reported-scale benchmark uses 120 structured Hamiltonians and 95% confidence intervals. The clear effect is commutator-aware ordering versus random; differences among non-random heuristics are treated cautiously when they fall within noise.</p></div>
-    <div class="card"><h3>Novelty highlight</h3><p>The contribution is a graph formalization of a no-cost ordering lever, with exact-reference evaluation and an interpretable learned router that tracks, rather than overclaims to beat, the best fixed strategy.</p></div>
+    <div class="card"><h3>Novelty highlight</h3><p>The contribution is a graph formalization of a zero-cost ordering mechanism, with exact-reference evaluation and an interpretable learned router that tracks, rather than overclaims to surpass, the best fixed strategy.</p></div>
   </div>
 </div></section>
 
 <!-- ============================ CONTRIBUTIONS ============================ -->
 <section id="contributions"><div class="wrap">
   <h2>Contributions &amp; novelty</h2>
-  <p class="lead">The contribution is a clean formalization and an honest measurement of a no-cost lever&mdash;not a
+  <p class="lead">The contribution is a clean formalization and a rigorous measurement of a zero-cost mechanism&mdash;not a
     fundamentally new primitive, and positioned as such. Three contributions, exactly as stated in the manuscript:</p>
   <ul class="contrib">
     <li><span class="num">1</span><b>A graph formalization of first-order Trotter ordering.</b> We cast term
       ordering as minimization of the <b>coefficient-weighted count of anticommuting adjacencies</b> on the
       commutator graph \(\mathcal{G}(H)\), and give a greedy walk that achieves a near-minimal count at
-      <b>no change to the gate proxy</b> \(L\cdot r\).</li>
+      <b>zero change to the gate proxy</b> \(L\cdot r\).</li>
     <li><span class="num">2</span><b>A matched-cost, exact, statistically reported measurement.</b> We evaluate the
       effect against exact statevector references on <b>120 structured Hamiltonian instances</b> and report every
       quantity as a mean with a 95% confidence interval, deliberately separating the <i>statistically clear</i>
       effect (ordering vs.&nbsp;random) from the <i>within-noise</i> comparison among non-random heuristics.</li>
     <li><span class="num">3</span><b>A small interpretable learned router.</b> A logistic-regression classifier over
       <b>eight commutator-graph features</b>, trained leave-one-instance-out, selects among the fixed orderings. We
-      show it <b>tracks rather than beats</b> the best fixed strategy&mdash;reported as a sanity-checked selector,
+      show it <b>tracks rather than surpasses</b> the best fixed strategy&mdash;reported as a sanity-checked selector,
       not a method that exceeds the heuristics.</li>
   </ul>
   <p class="note" style="margin-top:6px">Stated limitations are surfaced up front: first-order only; small systems
@@ -325,13 +325,13 @@
         (locality).</p>
     </div>
     <div class="card">
-      <h3>The honest caveat: within-noise among non-random orderings</h3>
+      <h3>The transparent caveat: within-noise among non-random orderings</h3>
       <p>The commutator (0.548), coefficient (0.550), and learned (0.549) means lie within <b>0.002</b> of one
         another&mdash;far inside their &asymp;&plusmn;0.067 intervals&mdash;and are <b>not statistically
         distinguishable</b> at this scale. The defensible statement: commutator ordering is <i>among the best</i>
         strategies and reaches that with by far the fewest anticommuting adjacencies (a directly interpretable,
-        ordering-only surrogate); we do <b>not</b> claim it significantly beats the coefficient heuristic on fidelity
-        here, and the learned router tracks rather than beats the best fixed strategy.</p>
+        ordering-only surrogate); we do <b>not</b> claim it significantly surpasses the coefficient heuristic on fidelity
+        here, and the learned router tracks rather than surpasses the best fixed strategy.</p>
     </div>
   </div>
 
@@ -340,7 +340,7 @@
       <h3>Gate-budget frontier (\(r\in\{1,2,3,4,6,8,12\}\))</h3>
       <p>Random ordering is dominated at <b>every</b> budget on the curve. At mean proxy 38 (\(r=3\)) random reaches
         0.193 while commutator and coefficient reach 0.548 and 0.550; at proxy 76 (\(r=6\)) the values are 0.589
-        (random) vs 0.823 (commutator). All orderings converge toward unit fidelity as \(r\) grows&mdash;ordering buys
+        (random) vs 0.823 (commutator). All orderings converge toward unit fidelity as \(r\) grows&mdash;ordering confers
         error reduction at a fixed budget, not a change in the asymptotic rate.</p>
     </div>
     <div class="card">
@@ -348,8 +348,8 @@
       <p><b>Heisenberg:</b> every non-random ordering reaches 1.000 &plusmn; 0.000 vs random 0.169 &plusmn; 0.086&mdash;the
         clearest case. <b>Transverse-field Ising:</b> non-random orderings (&asymp;0.480 &plusmn; 0.049) roughly double
         random (0.287 &plusmn; 0.051); locality is worst (0.350). <b>Random molecular-like:</b> all orderings are
-        indistinguishable (0.15&ndash;0.17)&mdash;an honest negative result: on dense, generic graphs at small \(r\) the
-        ordering lever is exhausted.</p>
+        indistinguishable (0.15&ndash;0.17)&mdash;an transparent negative result: on dense, generic graphs at small \(r\) the
+        ordering mechanism is exhausted.</p>
     </div>
   </div>
   <p class="note" style="margin-top:14px">Vector figures (schematic, frontier, per-family bars) accompany the
@@ -400,7 +400,7 @@
       </div>
       <div class="readout">
         <div class="ro"><b id="r-terms">&ndash;</b><span>Hamiltonian terms / gate proxy</span></div>
-        <div class="ro good"><b id="r-fid">&ndash;</b><span>fidelity at chosen r (this ordering)</span></div>
+        <div class="ro high-quality"><b id="r-fid">&ndash;</b><span>fidelity at chosen r (this ordering)</span></div>
         <div class="ro warn"><b id="r-rand">&ndash;</b><span>fidelity at chosen r (random)</span></div>
         <div class="ro"><b id="r-adj">&ndash;</b><span>anticommuting adjacencies in schedule</span></div>
       </div>
@@ -416,7 +416,7 @@
 <!-- ============================ CONCLUSION ============================ -->
 <section id="conclusion"><div class="wrap">
   <h2>Conclusion &amp; impact</h2>
-  <p class="lead">Term ordering is a free knob on first-order Trotter error. A commutator-graph ordering reaches the
+  <p class="lead">Term ordering is a cost-free control parameter on first-order Trotter error. A commutator-graph ordering reaches the
     high-fidelity end of the achievable range while minimizing the anticommuting adjacencies that generate the
     leading error&mdash;more than doubling mean fidelity relative to random at an identical gate budget across
     structured Hamiltonians.</p>
@@ -425,10 +425,9 @@
       materially changes first-order Trotter fidelity at <b>zero extra gate cost</b>, with disjoint confidence
       intervals between ordered and random. For near-term, budget-limited regimes, recovered fidelity is pure
       profit.</p></div>
-    <div class="card"><h3>Honest limitations</h3><p>First-order only; small systems (\(n\le 8\)); synthetic/structured
+    <div class="card"><h3>Transparent limitations</h3><p>First-order only; small systems (\(n\le 8\)); synthetic/structured
       families; a gate-count <b>proxy</b> \(L\cdot r\); within-noise differences among non-random orderings; the
-      effect washes out on dense molecular-like graphs at small \(r\); classical CPU simulation; solo author. No
-      hardware validation.</p></div>
+      effect attenuates on dense molecular-like graphs at small \(r\); classical CPU simulation; solo author. Hardware validation is left for future work.</p></div>
     <div class="card"><h3>Outlook</h3><p>Natural next steps: higher-order (Suzuki) formulas, larger systems with
       scalable (tensor-network / Krylov) references, real mapped molecular Hamiltonians, and a graph neural ordering
       policy trained directly on a differentiable Trotter-error objective.</p></div>
@@ -461,7 +460,7 @@ make audit                            # readiness gate: every number traces to a
 <footer><div class="wrap">
   <p><b>Molena Huynh</b> &middot; Commutator-Graph Term Ordering for First-Order Trotterization</p>
   <p class="note">All experiments are reproducible on commodity hardware; runtime and memory are reported for each
-    benchmark. This is a controlled demonstration of a no-cost lever, not a claim of hardware advantage.</p>
+    benchmark. This is a controlled demonstration of a zero-cost mechanism, not a claim of hardware advantage.</p>
 </div></footer>
 
 <script>
