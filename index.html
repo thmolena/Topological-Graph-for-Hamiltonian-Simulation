@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lie-Topological Graph Policies for Hamiltonian Simulation</title>
-<meta name="description" content="Commutator-graph term ordering for first-order Trotterization. Live in-browser statevector Trotter simulator with exact-reference fidelity.">
+<title>Commutator-Graph Term Ordering for First-Order Trotterization</title>
+<meta name="description" content="A commutator-graph term ordering that reduces first-order Lie-Trotter error at a fixed gate budget. Statistically reported across 120 structured Hamiltonians with an exact-reference, in-browser statevector Trotter demo.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body)"></script>
@@ -24,7 +24,7 @@
   code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   nav{position:sticky;top:0;z-index:50;background:rgba(251,252,254,.85);
     backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  nav .wrap{max-width:1040px;margin:0 auto;padding:11px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  nav .wrap{max-width:1040px;margin:0 auto;padding:11px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
   nav .brand{font-weight:700;letter-spacing:-.01em;margin-right:auto}
   nav .brand .p{color:var(--accent-d)}
   nav a{color:var(--muted);font-size:14px;font-weight:500}
@@ -33,12 +33,12 @@
   header.hero{padding:64px 20px 40px;text-align:center;background:
     radial-gradient(1200px 400px at 50% -120px,rgba(118,185,0,.10),transparent),
     radial-gradient(900px 360px at 80% -60px,rgba(31,111,235,.08),transparent)}
-  header.hero h1{font-size:clamp(28px,4.6vw,46px);line-height:1.1;letter-spacing:-.02em;margin:.2em auto;max-width:16ch}
-  header.hero .sub{color:var(--muted);font-size:clamp(15px,2vw,19px);max-width:62ch;margin:0 auto 8px}
+  header.hero h1{font-size:clamp(28px,4.6vw,44px);line-height:1.12;letter-spacing:-.02em;margin:.2em auto;max-width:20ch}
+  header.hero .sub{color:var(--muted);font-size:clamp(15px,2vw,19px);max-width:66ch;margin:0 auto 8px}
   .tag{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-d);
     background:rgba(118,185,0,.12);border:1px solid rgba(118,185,0,.3);border-radius:999px;padding:4px 12px;margin-bottom:14px}
   .chips{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:26px 0 10px}
-  .chip{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);min-width:150px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);min-width:158px}
   .chip b{display:block;font-size:21px;color:var(--accent-d);letter-spacing:-.01em}
   .chip span{font-size:12.5px;color:var(--muted)}
   .cta{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
@@ -47,12 +47,23 @@
   .btn:hover{text-decoration:none;transform:translateY(-1px)}
   section{padding:46px 0;border-top:1px solid var(--line)}
   section h2{font-size:26px;letter-spacing:-.01em;margin:0 0 6px}
-  section .lead{color:var(--muted);max-width:70ch;margin:0 0 22px}
+  section .lead{color:var(--muted);max-width:74ch;margin:0 0 22px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
   .card h3{margin:.1em 0 .4em;font-size:16px}
   .card p{margin:.2em 0;color:var(--muted);font-size:14.5px}
+  .card.math{overflow:auto}
+  .card.math p{color:var(--ink)}
+  ul.contrib{margin:0;padding-left:0;list-style:none}
+  ul.contrib li{position:relative;padding:12px 16px 12px 46px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;margin-bottom:12px;box-shadow:var(--shadow);font-size:15px}
+  ul.contrib li b{color:var(--accent-d)}
+  ul.contrib li .num{position:absolute;left:14px;top:12px;width:22px;height:22px;border-radius:50%;
+    background:var(--accent);color:#10240a;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .deflist{margin:0;font-size:14.5px}
+  .deflist dt{font-weight:700;color:var(--ink);margin-top:10px}
+  .deflist dd{margin:2px 0 0;color:var(--muted)}
   .pipe{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;font-size:13.5px}
   .pipe .step{flex:1;min-width:150px;background:#f6f8fb;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
   .pipe .step b{color:var(--accent-d)}
@@ -73,8 +84,11 @@
   table{border-collapse:collapse;width:100%;font-size:14px}
   th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left}
   th{color:var(--muted);font-weight:600;font-size:13px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   tr.best td{background:rgba(118,185,0,.08);font-weight:600}
+  caption{caption-side:bottom;text-align:left;color:var(--muted);font-size:12.5px;padding-top:10px}
   .note{font-size:13px;color:var(--muted)}
+  .callout{background:#f6f8fb;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:12px 16px;font-size:14px;color:var(--muted);margin:18px 0 0}
   footer{padding:40px 0 70px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:14px}
   .klink{display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0}
   pre{background:var(--code);color:#e6edf3;border-radius:12px;padding:14px 16px;overflow:auto;font-size:13px}
@@ -83,61 +97,278 @@
 </head>
 <body>
 <nav><div class="wrap">
-  <span class="brand"><span class="p">◆</span> Lie-Topological Hamiltonian Simulation</span>
-  <a href="#overview">Overview</a><a href="#method">Method</a><a href="#demo">Demo</a>
-  <a href="#results">Results</a><a href="#theory">Theory</a><a href="#code">Paper &amp; Code</a>
+  <span class="brand"><span class="p">&#9670;</span> Commutator-Graph Term Ordering</span>
+  <a href="#background">Background</a><a href="#tutorial">Tutorial</a><a href="#contributions">Contributions</a><a href="#method">Method</a>
+  <a href="#design">Design</a><a href="#results">Results</a><a href="#demo">Demo</a>
+  <a href="#conclusion">Conclusion</a><a href="#code">Paper &amp; Code</a>
   <a href="https://github.com/thmolena">GitHub</a>
 </div></nav>
 
 <header class="hero">
   <div class="wrap">
-    <span class="tag">commutator-graph term ordering · Trotter error from anticommutation · exact &amp; audited reproducibility</span>
-    <h1>Lie-Topological Graph Policies for Hamiltonian Simulation</h1>
-    <p class="sub">The <b>order</b> of terms in first-order Trotterization changes the simulation error <b>at zero extra gate cost</b>. We read that order off the <b>commutator graph</b> of the Hamiltonian and reach <b>higher fidelity at a matched gate budget</b> than random, coefficient- or locality-based orderings.</p>
+    <span class="tag">commutator-graph term ordering &middot; first-order Lie&ndash;Trotter &middot; matched gate budget &middot; audited reproducibility</span>
+    <h1>Commutator-Graph Term Ordering Reduces First-Order Trotter Error at a Fixed Gate Budget</h1>
+    <p class="sub">The <b>order</b> of the per-term rotations in a first-order Lie&ndash;Trotter product formula is a
+      <b>free parameter</b>: it changes the algorithmic error but not the gate count. We read an ordering off the
+      <b>commutator (anticommutation) graph</b> of \(H=\sum_j c_j P_j\) and report&mdash;honestly, with confidence
+      intervals&mdash;exactly how large and how robust the effect is against exact statevector references.</p>
     <div class="chips">
-      <div class="chip"><b id="c1">1e-9</b><span>Pauli-rotation ⟷ <code>expm</code> agreement</span></div>
-      <div class="chip"><b id="c2">1.99&times;</b><span>infidelity reduction vs random (demo)</span></div>
-      <div class="chip"><b id="c3">3</b><span>Hamiltonian families, matched budget</span></div>
+      <div class="chip"><b>0.548 &plusmn; 0.068</b><span>commutator-ordered fidelity (95% CI, n=120)</span></div>
+      <div class="chip"><b>0.205 &plusmn; 0.040</b><span>random-ordered fidelity (95% CI, n=120)</span></div>
+      <div class="chip"><b>1.76&times;</b><span>mean infidelity reduction at matched budget</span></div>
+      <div class="chip"><b>3.08 &rarr; 0.28</b><span>adjacent anticommuting pairs (random &rarr; commutator)</span></div>
     </div>
     <div class="cta">
-      <a class="btn primary" href="#demo">▶ Run the live Trotter demo</a>
+      <a class="btn primary" href="#demo">&#9654; Run the exact-reference Trotter demo</a>
+      <a class="btn" href="#results">See the results table</a>
       <a class="btn" href="#code">Paper &amp; code</a>
     </div>
+    <p class="note" style="margin-top:16px;max-width:70ch;margin-left:auto;margin-right:auto">
+      A controlled, fully reproducible demonstration that term ordering is a real, no-cost lever on Trotter error.
+      Not a claim of hardware advantage: first-order only, \(n\le 8\), synthetic/structured Hamiltonians, classical CPU simulation.</p>
   </div>
 </header>
 
-<section id="overview"><div class="wrap">
-  <h2>The problem</h2>
-  <p class="lead">Digital quantum simulation approximates \(e^{-iHt}\) for \(H=\sum_j c_j P_j\) by a product of
-    per-term rotations, repeated \(r\) times (Trotterization). The hardware cost is the <b>gate count</b>
-    \(\propto |\text{terms}|\cdot r\); the accuracy is the <b>Trotter error</b>. Crucially, the error between
-    two terms is set by their <b>commutator</b> \([P_a,P_b]\) — it is exactly zero when they commute — so the
-    <b>order</b> in which the rotations are applied changes the error <i>without changing the gate count</i>.</p>
+<!-- ============================ BACKGROUND ============================ -->
+<section id="background"><div class="wrap">
+  <h2>Background &amp; motivation</h2>
+  <p class="lead">Digital quantum simulation of \(e^{-iHt}\) by product formulas is the canonical near-term primitive.
+    For a Pauli decomposition \(H=\sum_{j=1}^{L} c_j P_j\), the first-order (Lie&ndash;Trotter) approximant with
+    \(r\) steps and an ordering \(\pi\) has its error controlled by the <b>commutators of the non-commuting
+    summands</b> (the commutator-scaling analysis of Childs et&nbsp;al.). Two facts set up the gap we address.</p>
   <div class="grid3">
-    <div class="card"><h3>Why a graph</h3><p>Build a graph whose nodes are the Hamiltonian's terms and whose edges connect <b>anticommuting</b> pairs. Only edges contribute first-order Trotter error; the schedule is a walk on this graph.</p></div>
-    <div class="card"><h3>Why ordering is free</h3><p>Reordering the product leaves the gate proxy \(|\text{terms}|\cdot r\) untouched. The commutator ordering is a pure-software win: same circuit depth, lower error.</p></div>
-    <div class="card"><h3>Why biology</h3><p>Mapped molecular electronic-structure Hamiltonians are dense sums of local Pauli terms with irregular anticommutation — exactly the regime where ordering matters most.</p></div>
+    <div class="card"><h3>Cost is order-independent</h3><p>A first-order schedule applies one rotation
+      \(e^{-ic_jP_jt/r}\) per term per step, so the gate count is \(L\cdot r\) <b>regardless of the order</b> \(\pi\)
+      in which the rotations are applied.</p></div>
+    <div class="card"><h3>Error is order-dependent</h3><p>The leading correction is a sum over commutators
+      \([c_aP_a,c_bP_b]\), which <b>vanishes for any commuting pair</b> and is sensitive to which non-commuting
+      terms sit adjacently in the product. Ordering is therefore a free knob.</p></div>
+    <div class="card"><h3>The precise gap</h3><p>Ordering sensitivity has been observed empirically in chemistry
+      Trotterization, but without a graph-centric formalization, a matched-cost exact evaluation, and an honest,
+      statistically reported quantification of how large and how robust the effect is.</p></div>
+  </div>
+  <p class="callout">Unlike higher-order formulas, randomized compilation, or step-size selection&mdash;which change
+    the gate budget or the algorithm&mdash;<b>reordering changes nothing about the circuit</b>. Any fidelity it
+    recovers is pure profit. The structural object that exposes which pairs contribute to the leading error is the
+    same commutator graph used for measurement grouping in variational algorithms, repurposed here for time
+    evolution.</p>
+</div></section>
+
+<!-- ===================== TUTORIAL FOR TECHNICAL HIRING READERS ===================== -->
+<section id="tutorial"><div class="wrap">
+  <h2>Tutorial for non-specialist technical readers</h2>
+  <p class="lead">Hamiltonian simulation approximates \(e^{-iHt}\) by applying one small rotation per Pauli term.
+    The number of rotations is fixed once \(L\), \(r\), and the Hamiltonian are fixed, but the order of those rotations
+    is still a design choice. This project asks how much fidelity can be recovered by choosing that order from the
+    commutator graph, while keeping the gate proxy unchanged.</p>
+  <div class="grid3">
+    <div class="card"><h3>Input</h3><p>A Pauli Hamiltonian \(H=\sum_j c_jP_j\) from structured TFIM, Heisenberg, or molecular-like families.</p></div>
+    <div class="card"><h3>Representation</h3><p>A commutator graph whose nodes are Hamiltonian terms and whose edges mark anticommuting pairs, weighted by coefficient structure.</p></div>
+    <div class="card"><h3>Scoring</h3><p>Exact-reference statevector fidelity, infidelity, observable error, anticommuting adjacency count, and matched gate proxy \(Lr\).</p></div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><h3>Statistical highlight</h3><p>The reported-scale benchmark uses 120 structured Hamiltonians and 95% confidence intervals. The clear effect is commutator-aware ordering versus random; differences among non-random heuristics are treated cautiously when they fall within noise.</p></div>
+    <div class="card"><h3>Novelty highlight</h3><p>The contribution is a graph formalization of a no-cost ordering lever, with exact-reference evaluation and an interpretable learned router that tracks, rather than overclaims to beat, the best fixed strategy.</p></div>
   </div>
 </div></section>
 
+<!-- ============================ CONTRIBUTIONS ============================ -->
+<section id="contributions"><div class="wrap">
+  <h2>Contributions &amp; novelty</h2>
+  <p class="lead">The contribution is a clean formalization and an honest measurement of a no-cost lever&mdash;not a
+    fundamentally new primitive, and positioned as such. Three contributions, exactly as stated in the manuscript:</p>
+  <ul class="contrib">
+    <li><span class="num">1</span><b>A graph formalization of first-order Trotter ordering.</b> We cast term
+      ordering as minimization of the <b>coefficient-weighted count of anticommuting adjacencies</b> on the
+      commutator graph \(\mathcal{G}(H)\), and give a greedy walk that achieves a near-minimal count at
+      <b>no change to the gate proxy</b> \(L\cdot r\).</li>
+    <li><span class="num">2</span><b>A matched-cost, exact, statistically reported measurement.</b> We evaluate the
+      effect against exact statevector references on <b>120 structured Hamiltonian instances</b> and report every
+      quantity as a mean with a 95% confidence interval, deliberately separating the <i>statistically clear</i>
+      effect (ordering vs.&nbsp;random) from the <i>within-noise</i> comparison among non-random heuristics.</li>
+    <li><span class="num">3</span><b>A small interpretable learned router.</b> A logistic-regression classifier over
+      <b>eight commutator-graph features</b>, trained leave-one-instance-out, selects among the fixed orderings. We
+      show it <b>tracks rather than beats</b> the best fixed strategy&mdash;reported as a sanity-checked selector,
+      not a method that exceeds the heuristics.</li>
+  </ul>
+  <p class="note" style="margin-top:6px">Stated limitations are surfaced up front: first-order only; small systems
+    (\(n\le 8\), where an exact reference is tractable); synthetic/structured Hamiltonians rather than production
+    molecules; a gate-count <i>proxy</i> \(L\cdot r\); and within-noise differences among the non-random orderings
+    at this scale. See <a href="#conclusion">Conclusion &amp; impact</a>.</p>
+</div></section>
+
+<!-- ============================ MATH & METHOD ============================ -->
 <section id="method"><div class="wrap">
-  <h2>Method</h2>
-  <p class="lead">Five interchangeable orderings feed one first-order Trotter schedule; the reward is the
-    <b>exact</b> fidelity against \(e^{-iHt}\) computed with <code>scipy.linalg.expm</code>.</p>
-  <div class="pipe">
-    <div class="step"><b>1 · Pauli algebra</b><br>O(n) commutation test · exact rotation \(e^{-i\theta P}=\cos\theta\,I-i\sin\theta\,P\)</div>
-    <div class="step"><b>2 · Commutator graph</b><br>edge ⇔ anticommute · greedy commuting groups · invariant features</div>
-    <div class="step"><b>3 · Ordering policy</b><br>commutator / learned router → schedule minimizing weighted anticommuting adjacencies</div>
-    <div class="step"><b>4 · Audited reward</b><br>fidelity vs exact \(e^{-iHt}\) at matched gate proxy; no fabricated numbers</div>
+  <h2>Mathematics &amp; method</h2>
+  <p class="lead">Every object below is exact and matrix-free at the inner kernel; the only dense exponential is the
+    small reference used for cross-checking and fidelity scoring.</p>
+
+  <div class="grid2">
+    <div class="card math">
+      <h3>Hamiltonian and first-order Trotter unitary</h3>
+      <p>$$H=\sum_{j=1}^{L} c_j\,P_j,\qquad P_j\in\{I,X,Y,Z\}^{\otimes n},\ c_j\in\mathbb{R}.$$</p>
+      <p>$$U_{\mathrm{Trot}}(\pi)=\Bigg(\prod_{j\in\pi} e^{-i\,c_j P_j\, t/r}\Bigg)^{\!r}.$$</p>
+      <p class="note">The implementation cost is one rotation per term per step, \(L\cdot r\), invariant under the
+        ordering \(\pi\).</p>
+    </div>
+    <div class="card math">
+      <h3>Exact, matrix-free per-term rotation</h3>
+      <p>Each Pauli is an involution, \(P^2=I\), so</p>
+      <p>$$e^{-i\theta P}\,|\psi\rangle=\cos\theta\,|\psi\rangle-i\sin\theta\,\big(P|\psi\rangle\big),$$</p>
+      <p class="note">a single sparse application of \(P\) (a permutation-and-phase of amplitudes) plus a scaled add,
+        in \(O(n\,2^n)\) time&mdash;never forming a \(2^n\times 2^n\) matrix.</p>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:18px">
+    <div class="card math">
+      <h3>Commutator graph and the ordering policy</h3>
+      <p>Commutation is an \(O(n)\) parity test: two Pauli strings commute iff the number of qubits on which their
+        single-qubit factors anticommute is <b>even</b>. The commutator graph \(\mathcal{G}(H)\) has one node per
+        term and an <b>edge for every anticommuting pair</b>.</p>
+      <p class="note">The greedy <b>commutator</b> ordering walks \(\mathcal{G}(H)\): starting from the
+        largest-\(|c_j|\) term, it appends an unused term that <i>commutes</i> with the current tail if possible;
+        otherwise the anticommuting term with the smallest coefficient product \(|c_{\mathrm{tail}}||c_j|\) (the
+        cheapest unavoidable commutator). A dual view is a greedy coloring of \(\mathcal{G}(H)\) into mutually
+        commuting groups.</p>
+    </div>
+    <div class="card math">
+      <h3>Leading error &#8733; adjacent anticommuting pairs</h3>
+      <p>For one step \(S_\pi(\Delta)=\prod_a e^{-i\Delta h_{\pi(a)}}\) (\(h_j=c_jP_j\), \(\Delta=t/r\)):</p>
+      <p>$$\big\|e^{-itH}-S_\pi(t/r)^r\big\|\le\frac{t^2}{2r}\sum_{a<b}\big\|[h_{\pi(a)},h_{\pi(b)}]\big\|+O\!\Big(\tfrac{t^3}{r^2}\Big).$$</p>
+      <p class="note">For Pauli terms \(\|[c_jP_j,c_kP_k]\|\) is \(0\) when the strings commute and \(2|c_jc_k|\) when
+        they anticommute. The <b>weighted anticommutation graph is the leading-order object</b> controlling the
+        ordering-dependent error; the schedule-level surrogate the policy minimizes is the coefficient-weighted count
+        of <i>adjacent</i> anticommuting pairs.</p>
+    </div>
+  </div>
+
+  <div class="pipe" style="margin-top:18px">
+    <div class="step"><b>1 &middot; Pauli algebra</b><br>\(O(n)\) commutation parity test &middot; exact rotation
+      \(e^{-i\theta P}=\cos\theta\,I-i\sin\theta\,P\)</div>
+    <div class="step"><b>2 &middot; Commutator graph</b><br>edge &hArr; anticommute &middot; greedy commuting groups
+      &middot; eight listing-order-invariant features</div>
+    <div class="step"><b>3 &middot; Ordering policy</b><br>greedy commutator walk / learned router &rarr; schedule
+      minimizing weighted anticommuting adjacencies</div>
+    <div class="step"><b>4 &middot; Audited score</b><br>fidelity vs exact \(e^{-iHt}\) at matched proxy \(L\cdot r\);
+      every number traced to an artifact</div>
   </div>
 </div></section>
 
+<!-- ============================ EXPERIMENTAL DESIGN ============================ -->
+<section id="design"><div class="wrap">
+  <h2>Experimental design &amp; statistics</h2>
+  <p class="lead">The reported-scale configuration (<code>configs/full.yaml</code>, seed 0) is designed so that any
+    fidelity difference is attributable solely to ordering: every ordering is evaluated at an identical gate budget
+    against an exact statevector reference.</p>
+  <div class="grid2">
+    <dl class="deflist card">
+      <dt>Sample (n = 120 instances)</dt>
+      <dd>3 families &times; 5 sizes \(n\in\{4,5,6,7,8\}\) &times; 8 seeded draws. Per-family statistics use the
+        \(N=40\) instances per family.</dd>
+      <dt>Families</dt>
+      <dd>Transverse-field Ising \(H=-J\sum_i Z_iZ_{i+1}-h\sum_i X_i\); Heisenberg \(H=\sum_i(J_xX_iX_{i+1}+J_yY_iY_{i+1}+J_zZ_iZ_{i+1})\);
+        and random molecular-like local 2-body Pauli terms (a tractable stand-in for mapped electronic-structure
+        Hamiltonians).</dd>
+      <dt>Matched gate budget</dt>
+      <dd>Cost is the proxy \(L\cdot r\) (one rotation per term per step), <b>invariant under reordering</b> and
+        reported alongside every comparison. Fixed point: \(t=2.0\), \(r=3\), mean proxy = 48.</dd>
+    </dl>
+    <dl class="deflist card">
+      <dt>95% confidence interval</dt>
+      <dd>Reported as the half-width \(1.96\,\hat\sigma/\sqrt{N}\) over instances (\(\hat\sigma\) = sample standard
+        deviation). Frontier bands use the same definition per point.</dd>
+      <dt>Cross-verification (integrity gate)</dt>
+      <dd>The fast Pauli-rotation kernel is checked against dense <code>scipy.linalg.expm</code> to tolerance
+        \(10^{-9}\) on random Paulis <b>before any fidelity is emitted</b>; the run records
+        <code>pauli_algebra_verified = true</code>. The exact reference \(e^{-iHt}|\psi_0\rangle\) (probe state
+        \(|+\rangle^{\otimes n}\)) is itself cross-checked against Krylov <code>expm_multiply</code>.</dd>
+      <dt>Provenance &amp; audit</dt>
+      <dd>All numbers derive from a single <code>results/summary.json</code> with full provenance; an automated audit
+        (<code>make audit</code>) verifies every reported number traces to a generated artifact and rejects forbidden
+        superiority phrasing. The reported run completed in &asymp;100&nbsp;s with &asymp;406&nbsp;MB peak memory.</dd>
+    </dl>
+  </div>
+</div></section>
+
+<!-- ============================ RESULTS ============================ -->
+<section id="results"><div class="wrap">
+  <h2>Results</h2>
+  <p class="lead">Reported scale: \(n=120\) instances, \(t=2.0\), \(r=3\), mean gate proxy 48
+    (<code>configs/full.yaml</code>). Values mirror the manuscript main table, generated verbatim from
+    <code>results/summary.json</code>&mdash;never hand-edited.</p>
+  <table>
+    <caption><b>Table 1.</b> First-order Trotter fidelity by term ordering at a matched gate budget. &ldquo;&plusmn;95%&rdquo;
+      is the half-width of the 95% CI over the 120 instances; &ldquo;adj. anticomm.&rdquo; is the mean number of
+      adjacent anticommuting pairs in the schedule.</caption>
+    <thead><tr>
+      <th>ordering</th><th class="num">fidelity</th><th class="num">&plusmn;95% CI</th>
+      <th class="num">infidelity</th><th class="num">adj. anticomm.</th><th class="num">gate proxy</th>
+    </tr></thead>
+    <tbody>
+      <tr><td>random <span class="note">(baseline)</span></td><td class="num">0.2054</td><td class="num">0.0400</td><td class="num">0.7946</td><td class="num">3.08</td><td class="num">48</td></tr>
+      <tr><td>coefficient (|c| desc)</td><td class="num">0.5501</td><td class="num">0.0670</td><td class="num">0.4499</td><td class="num">2.86</td><td class="num">48</td></tr>
+      <tr><td>locality (by support)</td><td class="num">0.5004</td><td class="num">0.0684</td><td class="num">0.4996</td><td class="num">6.47</td><td class="num">48</td></tr>
+      <tr class="best"><td>commutator (this work)</td><td class="num">0.5481</td><td class="num">0.0677</td><td class="num">0.4519</td><td class="num">0.28</td><td class="num">48</td></tr>
+      <tr><td>learned (router)</td><td class="num">0.5486</td><td class="num">0.0670</td><td class="num">0.4514</td><td class="num">2.50</td><td class="num">48</td></tr>
+    </tbody>
+  </table>
+
+  <div class="grid2" style="margin-top:22px">
+    <div class="card">
+      <h3>The clear effect: ordering vs.&nbsp;random</h3>
+      <p>Random ordering reaches mean fidelity <b>0.205 &plusmn; 0.040</b>; every non-random ordering more than doubles
+        it, with the commutator ordering at <b>0.548 &plusmn; 0.068</b>. The intervals are <b>disjoint</b> and the
+        0.343 mean fidelity gain spans many CI widths. Equivalently, infidelity falls from 0.795 to 0.452&mdash;a
+        <b>1.76&times; reduction</b> at the identical proxy of 48. The mechanism is visible in the adjacency count:
+        commutator ordering leaves only <b>0.28</b> adjacent anticommuting pairs vs 3.08 (random) and 6.47
+        (locality).</p>
+    </div>
+    <div class="card">
+      <h3>The honest caveat: within-noise among non-random orderings</h3>
+      <p>The commutator (0.548), coefficient (0.550), and learned (0.549) means lie within <b>0.002</b> of one
+        another&mdash;far inside their &asymp;&plusmn;0.067 intervals&mdash;and are <b>not statistically
+        distinguishable</b> at this scale. The defensible statement: commutator ordering is <i>among the best</i>
+        strategies and reaches that with by far the fewest anticommuting adjacencies (a directly interpretable,
+        ordering-only surrogate); we do <b>not</b> claim it significantly beats the coefficient heuristic on fidelity
+        here, and the learned router tracks rather than beats the best fixed strategy.</p>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:18px">
+    <div class="card">
+      <h3>Gate-budget frontier (\(r\in\{1,2,3,4,6,8,12\}\))</h3>
+      <p>Random ordering is dominated at <b>every</b> budget on the curve. At mean proxy 38 (\(r=3\)) random reaches
+        0.193 while commutator and coefficient reach 0.548 and 0.550; at proxy 76 (\(r=6\)) the values are 0.589
+        (random) vs 0.823 (commutator). All orderings converge toward unit fidelity as \(r\) grows&mdash;ordering buys
+        error reduction at a fixed budget, not a change in the asymptotic rate.</p>
+    </div>
+    <div class="card">
+      <h3>Per-family breakdown (\(N=40\) each)</h3>
+      <p><b>Heisenberg:</b> every non-random ordering reaches 1.000 &plusmn; 0.000 vs random 0.169 &plusmn; 0.086&mdash;the
+        clearest case. <b>Transverse-field Ising:</b> non-random orderings (&asymp;0.480 &plusmn; 0.049) roughly double
+        random (0.287 &plusmn; 0.051); locality is worst (0.350). <b>Random molecular-like:</b> all orderings are
+        indistinguishable (0.15&ndash;0.17)&mdash;an honest negative result: on dense, generic graphs at small \(r\) the
+        ordering lever is exhausted.</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:14px">Vector figures (schematic, frontier, per-family bars) accompany the
+    manuscript:
+    <a href="submission/figures/fig_schematic.pdf">fig_schematic.pdf</a>,
+    <a href="submission/figures/fig_frontier.pdf">fig_frontier.pdf</a>,
+    <a href="submission/figures/fig_family.pdf">fig_family.pdf</a>. They are not embedded here; the numbers above are
+    the source of truth.</p>
+</div></section>
+
+<!-- ============================ DEMO (preserved) ============================ -->
 <section id="demo"><div class="wrap">
-  <h2>Live demo — statevector Trotter, entirely in your browser</h2>
-  <p class="lead">Pick a spin chain and an evolution time, then choose how the terms are ordered. The demo runs
-    <b>exact statevector Trotterization</b> (the same single-Pauli rotations as the Python package) for a sweep
-    of step counts \(r\), and measures fidelity against a <b>fine-grained \(r=2048\) reference</b>. No server, no
-    fabrication.</p>
+  <h2>Interactive demo &mdash; exact statevector Trotter, entirely in your browser</h2>
+  <p class="lead">This runs the <b>same single-Pauli rotation kernel</b> as the Python package
+    (\(e^{-i\theta P}|\psi\rangle=\cos\theta\,|\psi\rangle-i\sin\theta\,P|\psi\rangle\), exact because \(P^2=I\)),
+    builds the chosen ordering over the same term list, and scores fidelity against a fine-grained \(r=2048\) Trotter
+    reference. It is faithful for the same reason the package is trusted: the rotation kernel is verified against
+    dense <code>expm</code> to \(10^{-9}\). Pick a chain, an evolution time, and an ordering, then sweep \(r\) to see
+    the commutator ordering (green) dominate random (grey) at every budget&mdash;at an identical gate proxy.</p>
   <div class="demo">
     <div class="controls card">
       <label>Hamiltonian</label>
@@ -157,7 +388,7 @@
         <option value="coefficient">coefficient (|c| desc)</option>
         <option value="commutator" selected>commutator (ours)</option>
       </select>
-      <button class="go" id="sim">▶ Simulate &amp; sweep r</button>
+      <button class="go" id="sim">&#9654; Simulate &amp; sweep r</button>
       <p class="note" style="margin-top:14px">Reference = r = 2048 Trotter (ground truth). Statevector dim \(2^n\le32\).</p>
     </div>
     <div>
@@ -168,71 +399,69 @@
           <p class="note">Fidelity vs Trotter steps \(r\) for the chosen ordering (green) and random (grey).</p></div>
       </div>
       <div class="readout">
-        <div class="ro"><b id="r-terms">–</b><span>Hamiltonian terms / gate proxy</span></div>
-        <div class="ro good"><b id="r-fid">–</b><span>fidelity at chosen r (this ordering)</span></div>
-        <div class="ro warn"><b id="r-rand">–</b><span>fidelity at chosen r (random)</span></div>
-        <div class="ro"><b id="r-adj">–</b><span>anticommuting adjacencies in schedule</span></div>
+        <div class="ro"><b id="r-terms">&ndash;</b><span>Hamiltonian terms / gate proxy</span></div>
+        <div class="ro good"><b id="r-fid">&ndash;</b><span>fidelity at chosen r (this ordering)</span></div>
+        <div class="ro warn"><b id="r-rand">&ndash;</b><span>fidelity at chosen r (random)</span></div>
+        <div class="ro"><b id="r-adj">&ndash;</b><span>anticommuting adjacencies in schedule</span></div>
       </div>
     </div>
   </div>
+  <p class="callout">Why this is faithful: the demo never forms a \(2^n\times 2^n\) matrix for evolution; it applies
+    the exact closed-form Pauli rotation amplitude-by-amplitude, identical to <code>pauli.apply_pauli_rotation</code>
+    in the package. The commutator ordering here is the same greedy walk on \(\mathcal{G}(H)\) used at scale. Demo
+    numbers are computed live for the small chains you select and are therefore illustrative; the headline figures
+    above are the full-scale \(n=120\) results.</p>
 </div></section>
 
-<section id="results"><div class="wrap">
-  <h2>Results</h2>
-  <p class="lead">Smoke-scale, three families (TFIM / Heisenberg / molecular-like), n ∈ {3,4}, t = 2.0, r = 3 —
-    <b>regenerated by <code>make demo</code></b> (never hand-edited). The reported-scale run is <code>make full-run</code>.</p>
-  <table>
-    <thead><tr><th>ordering</th><th>fidelity</th><th>±95% CI</th><th>adj. anticomm.</th><th>gate proxy</th></tr></thead>
-    <tbody>
-      <tr><td>random</td><td>0.4435</td><td>0.1425</td><td>2.33</td><td>24</td></tr>
-      <tr><td>coefficient (|c| desc)</td><td>0.7153</td><td>0.1417</td><td>1.50</td><td>24</td></tr>
-      <tr><td>locality (by support)</td><td>0.6194</td><td>0.1539</td><td>3.22</td><td>24</td></tr>
-      <tr class="best"><td>commutator (ours)</td><td>0.7201</td><td>0.1352</td><td>0.33</td><td>24</td></tr>
-      <tr><td>learned (router)</td><td>0.7102</td><td>0.1411</td><td>1.50</td><td>24</td></tr>
-    </tbody>
-  </table>
-  <p class="note" style="margin-top:12px">The commutator ordering reaches the highest fidelity at the
-    <i>fewest</i> anticommuting adjacencies (0.33 vs 2.33 for random) — a <b>1.99× reduction in infidelity</b> at
-    an identical gate proxy. Every ordering is evaluated at the same budget; only the error changes.</p>
-</div></section>
-
-<section id="theory"><div class="wrap">
-  <h2>Why the demo is exact</h2>
-  <p class="lead">Every Pauli string squares to the identity, \(P^2=I\), so it has eigenvalues \(\pm1\) and the
-    single-term evolution has a closed form with no matrix exponential:</p>
-  <div class="card" style="overflow:auto">
-    <p>$$e^{-i\theta P}=\cos\theta\,I-i\sin\theta\,P,\qquad
-      \big(e^{-i\theta P}\big)|\psi\rangle=\cos\theta\,|\psi\rangle-i\sin\theta\,(P|\psi\rangle).$$</p>
+<!-- ============================ CONCLUSION ============================ -->
+<section id="conclusion"><div class="wrap">
+  <h2>Conclusion &amp; impact</h2>
+  <p class="lead">Term ordering is a free knob on first-order Trotter error. A commutator-graph ordering reaches the
+    high-fidelity end of the achievable range while minimizing the anticommuting adjacencies that generate the
+    leading error&mdash;more than doubling mean fidelity relative to random at an identical gate budget across
+    structured Hamiltonians.</p>
+  <div class="grid3">
+    <div class="card"><h3>What the result is</h3><p>A statistically clear, reproducible finding that ordering
+      materially changes first-order Trotter fidelity at <b>zero extra gate cost</b>, with disjoint confidence
+      intervals between ordered and random. For near-term, budget-limited regimes, recovered fidelity is pure
+      profit.</p></div>
+    <div class="card"><h3>Honest limitations</h3><p>First-order only; small systems (\(n\le 8\)); synthetic/structured
+      families; a gate-count <b>proxy</b> \(L\cdot r\); within-noise differences among non-random orderings; the
+      effect washes out on dense molecular-like graphs at small \(r\); classical CPU simulation; solo author. No
+      hardware validation.</p></div>
+    <div class="card"><h3>Outlook</h3><p>Natural next steps: higher-order (Suzuki) formulas, larger systems with
+      scalable (tensor-network / Krylov) references, real mapped molecular Hamiltonians, and a graph neural ordering
+      policy trained directly on a differentiable Trotter-error objective.</p></div>
   </div>
-  <p class="lead" style="margin-top:14px">Two terms commute iff the number of qubits on which their factors
-    anticommute is even — an O(n) parity check, the commutator-graph edge rule. First-order Trotter error
-    between two terms scales with \(|c_a||c_b|\,\lVert[P_a,P_b]\rVert\), which is <b>zero when they commute</b>;
-    the commutator ordering greedily keeps adjacent terms commuting (or cheap when not).</p>
-  <p class="note" style="margin-top:12px">The package ships this fast statevector rotation and a dense
-    <code>scipy.linalg.expm</code> reference, and a test asserts they agree to \(10^{-9}\) on random Paulis — so
-    the fast in-browser Trotter is the trusted math.</p>
 </div></section>
 
+<!-- ============================ PAPER & CODE ============================ -->
 <section id="code"><div class="wrap">
   <h2>Paper &amp; code</h2>
+  <p class="lead">Manuscript: <i>Commutator-Graph Term Ordering Reduces First-Order Trotter Error at a Fixed Gate
+    Budget</i>. The accompanying package regenerates every figure, table, and reported number; nothing in the paper
+    is typed by hand.</p>
   <div class="klink">
-    <a class="btn" href="https://github.com/thmolena">↗ GitHub repository</a>
-    <a class="btn" href="code/">code/ — runnable package</a>
+    <a class="btn" href="submission/main.pdf">&#8599; Manuscript (PDF)</a>
+    <a class="btn" href="https://github.com/thmolena">&#8599; GitHub repository</a>
+    <a class="btn" href="code/">code/ &mdash; runnable package</a>
     <a class="btn" href="#demo">Live demo</a>
   </div>
   <pre>cd code
-make install
-make test            # Pauli-rotation ↔ expm cross-check, Trotter convergence, core claim
-make demo            # writes results/summary.json in ~3 s
-make tables figures  # regenerate the table above + the fidelity-vs-budget frontier
-make audit           # readiness gate: every number traces to an artifact</pre>
-  <p class="note">Everything on this page — the table, the figures, and the statevector Trotter math in the demo —
-    is produced by the package in <a href="code/">code/</a>. No number is hand-written.</p>
+pip install -e .                      # CPU-only; NumPy / SciPy / NetworkX / scikit-learn / Matplotlib
+make test                             # Pauli algebra (1e-9), Trotter convergence, metrics, ordering claim
+export KMP_DUPLICATE_LIB_OK=TRUE
+bash scripts/reproduce_all.sh full    # writes results/summary.json, table, figures (~100 s, ~406 MB)
+make audit                            # readiness gate: every number traces to a generated artifact</pre>
+  <p class="note">The single source of truth is <code>results/summary.json</code>, written with full provenance
+    (seed, command, platform, package versions, runtime, peak memory, and the <code>pauli_algebra_verified</code>
+    flag). The table above and the figures are derived directly from it.</p>
 </div></section>
 
 <footer><div class="wrap">
-  <p><b>Molena Huynh, PhD</b> · Lie-Topological Graph Policies for Hamiltonian Simulation</p>
-  <p class="note">All experiments are reproducible on commodity hardware; runtime and memory are reported for each benchmark.</p>
+  <p><b>Molena Huynh</b> &middot; Commutator-Graph Term Ordering for First-Order Trotterization</p>
+  <p class="note">All experiments are reproducible on commodity hardware; runtime and memory are reported for each
+    benchmark. This is a controlled demonstration of a no-cost lever, not a claim of hardware advantage.</p>
 </div></footer>
 
 <script>
