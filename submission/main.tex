@@ -448,6 +448,39 @@ coefficient. This directly drives down the weighted adjacency count at no change
 the gate proxy $L\cdot r$. A dual view is a greedy colouring of $\calG(H)$ into
 mutually commuting groups.
 
+\begin{theorem}[First-order ordering error proxy]
+\label{thm:trotter-ordering}
+Let $H=\sum_{j=1}^L h_j$ with bounded Hermitian terms and let
+$S_\pi(\Delta)=\prod_{a=1}^L\exp(-\ii\Delta h_{\pi(a)})$ be one first-order
+Trotter step in ordering $\pi$. For fixed evolution time $t$ and $r$ steps,
+\[
+\left\|\exp(-\ii tH)-S_\pi(t/r)^r\right\|
+\le
+\frac{t^2}{2r}\sum_{a<b}\|[h_{\pi(a)},h_{\pi(b)}]\|
+ + O\!\left(\frac{t^3}{r^2}\right).
+\]
+For Pauli terms, $\|[c_jP_j,c_kP_k]\|$ is zero when the strings commute and
+$2|c_jc_k|$ when they anticommute. Thus the weighted anticommutation graph is
+the leading-order object controlling the ordering-dependent error proxy at a
+fixed gate budget.
+\end{theorem}
+
+\begin{proof}
+The Baker--Campbell--Hausdorff expansion for one ordered product gives
+\[
+\log S_\pi(\Delta)
+=-\ii\Delta\sum_j h_j-\frac{\Delta^2}{2}\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]
+ +O(\Delta^3),
+\]
+with the remainder bounded by third-order nested commutators on bounded
+families. Comparing this logarithm with $-\ii\Delta H$ and applying Duhamel's
+formula bounds the one-step operator error by the norm of the second-order
+commutator term plus $O(\Delta^3)$. Iterating over $r$ steps gives the displayed
+$t^2/r$ leading term. For Pauli strings, either $P_jP_k=P_kP_j$ and the
+commutator vanishes, or $P_jP_k=-P_kP_j$ and
+$[c_jP_j,c_kP_k]=2c_jc_kP_jP_k$, whose operator norm is $2|c_jc_k|$.
+\end{proof}
+
 \subsection{The learned router}
 \label{sec:router_method}
 Eight scalar, listing-order-invariant features of $\calG(H)$ are computed per

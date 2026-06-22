@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "topoham"
+version = "0.1.0"
+description = "Lie-Topological Graph Policies for Biomolecular Hamiltonian Simulation"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Molena Huynh" }]
+dependencies = [
+  "numpy>=1.24", "scipy>=1.10", "networkx>=3.0",
+  "scikit-learn>=1.2", "matplotlib>=3.6", "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+gpu = ["torch>=2.0"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+topoham-reproduce = "topoham.reproduce:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

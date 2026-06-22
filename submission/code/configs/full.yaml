@@ -1,0 +1,13 @@
+# Reported-scale configuration. Larger systems (still exact-statevector
+# tractable, n<=8) and more instances per family for tight confidence intervals.
+# Runtime on a multi-core laptop CPU is on the order of minutes (dense expm of a
+# 2^8 x 2^8 Hamiltonian per reference).
+name: full
+seed: 0
+families: [tfim, heisenberg, molecular_like]
+sizes: [4, 5, 6, 7, 8]
+n_per_family: 8
+time: 2.0
+steps: 3
+steps_grid: [1, 2, 3, 4, 6, 8, 12]
+reference_backend: expm

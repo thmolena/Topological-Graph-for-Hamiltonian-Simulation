@@ -1,0 +1,12 @@
+# Smoke / demo configuration: runs in a few seconds on a laptop CPU.
+# Numbers from this config are demo-scale (small systems, few instances) -- the
+# reported-scale numbers come from configs/full.yaml.
+name: smoke
+seed: 0
+families: [tfim, heisenberg, molecular_like]
+sizes: [3, 4]
+n_per_family: 3
+time: 2.0
+steps: 3
+steps_grid: [1, 2, 3, 4, 6]
+reference_backend: expm
