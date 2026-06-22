@@ -84,9 +84,7 @@ per-family breakdown are written to `results/summary.json` and plotted in `figur
     ├── Makefile                One-word targets: install · test · demo · tables · figures · audit · full-run
     ├── README.md               Code-artifact quickstart and layout
     ├── environment.yml         Conda environment (CPU-only)
-    ├── requirements.txt        pip dependencies (numpy · scipy · networkx · scikit-learn · matplotlib)
-    ├── requirements-optional-gpu.txt   Optional accelerated backends (cuQuantum · PyG); never required
-    ├── pyproject.toml          Package metadata / editable install
+    ├── pyproject.toml          Package metadata / source-tree execution
     ├── .github/workflows/      CI: install + test + demo on every push
     ├── src/topoham/            The library (see file-by-file table below)
     ├── scripts/                Thin command-line entry points around the library
@@ -157,7 +155,7 @@ what you see on the page is the same math as the Python package.
 ## GPU / acceleration note
 
 The reference implementation is **CPU-only and runs everywhere**. The architecture exposes
-optional accelerated backends ([`code/requirements-optional-gpu.txt`](code/requirements-optional-gpu.txt)):
+optional accelerated backends that can be installed separately:
 a **cuQuantum** statevector / tensor-network Trotter path for `n > ~20` qubits (where the
 dense `expm` reference no longer fits), a **PyTorch-Geometric** message-passing GNN over the
 commutator graph as a drop-in for the ordering policy, and a differentiable Trotter-error

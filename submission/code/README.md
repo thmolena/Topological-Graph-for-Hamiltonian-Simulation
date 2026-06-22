@@ -10,8 +10,8 @@ PyTorch GNN backend can be dropped in. No heavyweight quantum dependency.
 
 ## Install
 ```bash
-conda env create -f environment.yml && conda activate topoham   # or:
-pip install -r requirements.txt && pip install -e .
+conda env create -f environment.yml && conda activate topoham
+export PYTHONPATH=src
 ```
 
 ## Reproduce
@@ -56,4 +56,4 @@ dense `expm` before any fidelity number was produced. It is the single source of
 truth for every table, figure and macro.
 
 All experiments are reproducible on commodity hardware; runtime and memory are reported for each benchmark.
-A from-basics explanation of the Pauli, commutator-graph, and Trotter objects is in `THEORY.txt`.
+A from-basics explanation of the Pauli, commutator-graph, and Trotter objects is in `src/topoham/foundations.py`.

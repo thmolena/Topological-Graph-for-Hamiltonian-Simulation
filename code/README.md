@@ -10,8 +10,8 @@ PyTorch GNN backend can be dropped in. No heavyweight quantum dependency.
 
 ## Install
 ```bash
-conda env create -f environment.yml && conda activate topoham   # or:
-pip install -r requirements.txt && pip install -e .
+conda env create -f environment.yml && conda activate topoham
+export PYTHONPATH=src
 ```
 
 ## Reproduce

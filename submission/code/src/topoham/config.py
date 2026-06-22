@@ -1,4 +1,13 @@
-"""YAML experiment configuration."""
+"""YAML experiment configuration.
+
+Loads the experiment protocol of the paper (Methods, "Hamiltonian families and
+protocol"): the Hamiltonian ``families`` to sweep, system ``sizes`` ``n``, number
+of seeded instances per (family, size), evolution ``time`` ``t``, fixed Trotter
+``steps`` ``r`` (so the matched gate proxy is ``n_terms * r``), the ``steps_grid``
+used for the gate-budget frontier, and the exact ``reference_backend``. ``smoke``
+is the fast demo configuration; ``full`` is the reported-scale configuration whose
+numbers appear in the manuscript.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

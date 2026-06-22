@@ -1,4 +1,14 @@
-"""Installed reproduction command for the topology-guided Hamiltonian artifact."""
+"""Installed reproduction command for the topology-guided Hamiltonian artifact.
+
+Exposes ``topoham-reproduce`` (see ``pyproject.toml`` console scripts): one command
+that runs the full pipeline behind every reported number -- the experiment runner
+(``scripts/run.py`` -> ``results/summary.json``), table and figure generation
+(``make_tables.py``, ``make_figures.py``), and the readiness-gate audit
+(``audit_claims.py``). It then syncs the regenerated table and figure artifacts into
+the ``submission/`` folder used to build the manuscript, so the paper's numbers,
+tables, and figures all trace to one run (Methods, "Reproducibility, software, and
+provenance").
+"""
 
 from __future__ import annotations
 
@@ -29,7 +39,7 @@ def _sync_submission() -> None:
     for path in (code / "figures").glob("*"):
         if path.suffix.lower() in {".pdf", ".png"}:
             shutil.copy2(path, submission / "figures" / path.name)
-    for name in ("main_results.tex", "summary_full.json"):
+    for name in ("main_results.tex",):
         src = code / "results" / name
         if src.exists():
             shutil.copy2(src, submission / "tables" / name)

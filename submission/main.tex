@@ -85,7 +85,6 @@ on commodity hardware; runtime and memory are reported for each benchmark.
 \end{abstract}
 
 % ============================================================
-\section{Introduction}
 \label{sec:introduction}
 
 Simulating the time evolution $e^{-\ii H t}$ of a quantum many-body Hamiltonian is
@@ -580,6 +579,291 @@ experiments, analysed the results, and wrote the manuscript.
 
 \section*{Funding}
 The author received no specific funding for this work.
+
+% ============================================================
+\appendix
+\section*{Supplementary Information}
+\addcontentsline{toc}{section}{Supplementary Information}
+\renewcommand{\thesection}{S\arabic{section}}
+\setcounter{section}{0}
+\renewcommand{\theequation}{S\arabic{equation}}
+\setcounter{equation}{0}
+
+\noindent This Supplementary Information is a self-contained, from-scratch
+derivation of every concept the accompanying code (\texttt{submission/code})
+implements. It is written to be read top-to-bottom by someone who has seen linear
+algebra and basic probability but \emph{not} quantum computing, product formulas,
+Pauli algebra, the commutator graph, or the specific estimators used here; every
+symbol used in the code is defined. Each section names the source file it maps to,
+so the theory and the implementation can be read side by side. The Methods
+(Sec.~\ref{sec:methods}) state the same objects compactly for the expert reader;
+here we cross-reference those results rather than repeat them.
+
+\section{The problem in one paragraph}
+\label{si:problem}
+We want to simulate the time evolution of a quantum system: starting from a state
+$\ket{\psi_0}$, compute $e^{-\ii H t}\ket{\psi_0}$, where $H$ is the Hamiltonian
+(the energy operator) and $t$ is a time. On a quantum computer we cannot apply
+$e^{-\ii H t}$ directly; we approximate it by a \emph{product formula}
+(Trotterization) that chains together easy one-term rotations, with an associated
+error. The cost of a first-order schedule is one rotation per Hamiltonian term per
+step, and this cost does \emph{not} depend on the \emph{order} in which the
+rotations are applied. The error \emph{does}. So the term ordering is a free knob:
+it can lower the error at zero extra gate cost. The scientific question of this
+paper is how large, and how robust, the gain from a \emph{commutator-graph-aware}
+ordering is versus a random one, measured honestly against an exact reference. As
+the Results show, the ordering-versus-random gain is large and statistically clear;
+among non-random orderings the differences are within noise; and on dense families
+the effect washes out.
+
+\section{Hamiltonians as Pauli sums}
+\label{si:hamiltonians}
+\emph{Source file:} \texttt{src/topoham/hamiltonians.py}. The system of $n$ qubits
+lives in the complex vector space $\C^{2^n}$. A \emph{statevector} is a unit vector
+$\psi\in\C^{2^n}$; its $2^n$ entries are the amplitudes on the computational basis
+states $\ket{z}$, $z\in\{0,1\}^n$. Every Hamiltonian on $n$ qubits can be written as
+a real linear combination of Pauli strings,
+\begin{equation}
+    H=\sum_{j=1}^{L} c_j\,P_j,
+    \label{eq:si-paulisum}
+\end{equation}
+where each $c_j$ is a real coefficient and each $P_j$ is a Pauli string---a
+length-$n$ word over $\{I,X,Y,Z\}$, e.g.\ $\texttt{XIZ}=X_0\otimes I_1\otimes Z_2$.
+Here $I,X,Y,Z$ are the four single-qubit Pauli matrices ($I$ is identity; $X$ flips;
+$Z$ phases the $\ket{1}$ half by $-1$; $Y=\ii XZ$). A Pauli string is the
+tensor (Kronecker) product of its single-qubit factors, a $2^n\times2^n$ matrix---but,
+crucially, we almost never form that matrix (Sec.~\ref{si:pauli}).
+
+Three structured \emph{families} are generated as term lists $\{(c_j,P_j)\}$
+(Methods, Sec.~\ref{sec:families_method}): the transverse-field Ising model
+($\texttt{tfim}$), $H=-J\sum_i Z_iZ_{i+1}-h\sum_i X_i$; the Heisenberg model,
+$H=\sum_i\bigl(J_x X_iX_{i+1}+J_y Y_iY_{i+1}+J_z Z_iZ_{i+1}\bigr)$; and a
+\emph{molecular-like} family of random local two-body Pauli terms with seeded
+Gaussian coefficients---a tractable stand-in for the dense, irregular
+anticommutation structure of mapped electronic-structure (Jordan--Wigner /
+Bravyi--Kitaev) Hamiltonians. We use three families because ``is the ordering lever
+general?'' only means something across structurally different Hamiltonians: they
+span the regimes from sparse-and-orderable (Heisenberg) to dense-and-stubborn
+(molecular-like).
+
+\section{Pauli algebra: two facts that make exact simulation cheap}
+\label{si:pauli}
+\emph{Source file:} \texttt{src/topoham/pauli.py}.
+
+\paragraph{Fact A---commutation is an $O(n)$ parity test (no matrices).}
+Two single-qubit Paulis anticommute iff they differ and neither is $I$ (e.g.\ $X$
+and $Z$ anticommute; $X$ and $X$ commute; $X$ and $I$ commute). Two Pauli
+\emph{strings} $P,Q$ commute iff the number of qubit positions where their factors
+anticommute is \emph{even}, and anticommute iff that count is \emph{odd}. Proof
+sketch: swapping $P$ past $Q$ picks up a factor $(-1)$ for each anticommuting
+position, so $PQ=(-1)^k QP$ with $k$ the number of anticommuting positions. This
+$O(n)$ test (\texttt{pauli.commute} / \texttt{pauli.anticommute}) is the structural
+fact the commutator graph (Sec.~\ref{si:graph}) is built from.
+
+\paragraph{Fact B---a Pauli is an involution, so its rotation is a cosine/sine pair.}
+Any non-identity Pauli string satisfies $P^2=I$ (its eigenvalues are $\pm1$).
+Taylor-expanding the matrix exponential and grouping even/odd powers gives the exact
+identity $e^{-\ii\theta P}=\cos\theta\,I-\ii\sin\theta\,P$, so one Trotter factor
+applied to a state is exactly Eq.~\eqref{eq:rotation},
+$e^{-\ii\theta P}\ket{\psi}=\cos\theta\,\ket{\psi}-\ii\sin\theta\,(P\ket{\psi})$.
+This is a single sparse application of $P$ (a permutation-and-phase of amplitudes,
+\texttt{pauli.apply\_pauli}, in $O(n\,2^n)$ time) plus a scaled add---never forming
+or exponentiating the $2^n\times2^n$ matrix. It is \texttt{pauli.apply\_pauli\_rotation},
+the inner kernel of the whole simulator.
+
+\paragraph{Cross-verification (the integrity gate).}
+Before any fidelity number is produced, the routine
+\texttt{runner.\allowbreak\_verify\allowbreak\_pauli\allowbreak\_algebra} checks the
+fast kernel above against the dense \texttt{scipy.\allowbreak linalg.\allowbreak expm}
+applied to $\psi$ on random small Paulis to tolerance $10^{-9}$, and records the flag
+\texttt{pauli\allowbreak\_algebra\allowbreak\_verified} in \texttt{summary.json}. If
+a future edit breaks either path, the flag goes false and the audit fails (see
+\texttt{tests/\allowbreak test\allowbreak\_pauli.py}).
+
+\section{The commutator graph}
+\label{si:graph}
+\emph{Source file:} \texttt{src/topoham/commutator\_graph.py}. Define a graph
+$\calG(H)$ with one node per term $j$ of $H$ and an edge between terms $j,k$ iff
+$P_j$ and $P_k$ \emph{anticommute} (Fact A); it is also called the anticommutation
+graph. Two structural readings drive everything.
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \emph{Trotter error lives on the edges.} A first-order step is exact for any
+    pair of terms that commute (non-adjacent in $\calG$); all of the leading error
+    comes from anticommuting (adjacent) pairs (Sec.~\ref{si:why-ordering}).
+    Re-ordering the product to keep anticommuting terms apart in the schedule
+    shrinks the error---for free.
+  \item \emph{A proper graph colouring partitions the terms into mutually-commuting
+    groups} (same colour $\Rightarrow$ no edge $\Rightarrow$ commute). Each colour
+    class can be exponentiated exactly and simultaneously---the classic
+    commuting-group Trotter optimisation, and the dual view of the ordering
+    (\texttt{greedy\allowbreak\_color\allowbreak\_groups}, a largest-first
+    colouring via NetworkX).
+\end{itemize}
+This file also computes eight scalar, listing-order-invariant features of
+$\calG(H)$: term count; anticommutation (edge) density; mean and maximum node
+degree; number of greedy colour groups; largest-group fraction; coefficient
+coefficient-of-variation; and mean Pauli weight. They are $O(L^2)$ graph
+invariants---independent of how the terms happen to be listed---so the learned
+router's decision (Sec.~\ref{si:router}) is listing-order invariant by construction.
+
+\section{Why ordering controls the error (the theorem, derived)}
+\label{si:why-ordering}
+\emph{Source: Methods, Sec.~\ref{sec:graph_method}; \texttt{src/topoham/runner.py}.}
+The first-order (Lie--Trotter) approximant with $r$ steps and ordering $\pi$ is
+Eq.~\eqref{eq:trotter}. Writing $\Delta=t/r$ and
+$S_\pi(\Delta)=\prod_a e^{-\ii\Delta h_{\pi(a)}}$ for one ordered step with
+$h_j=c_jP_j$, the Baker--Campbell--Hausdorff expansion of the ordered product gives
+\begin{equation}
+    \log S_\pi(\Delta)=-\ii\Delta\sum_j h_j
+    -\frac{\Delta^2}{2}\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]+O(\Delta^3),
+    \label{eq:si-bch}
+\end{equation}
+where $[A,B]=AB-BA$ is the commutator. Comparing with the exact one-step generator
+$-\ii\Delta H=-\ii\Delta\sum_j h_j$, the first discrepancy is the second-order
+commutator sum. Duhamel's formula bounds the one-step operator error by the norm of
+that term plus $O(\Delta^3)$; iterating over $r$ steps gives the bound of
+Theorem~\ref{thm:trotter-ordering}. For Pauli terms the commutator is exactly
+computable: if $P_j,P_k$ commute then $[c_jP_j,c_kP_k]=0$; if they anticommute then
+$P_jP_k=-P_kP_j$, so $[c_jP_j,c_kP_k]=2c_jc_kP_jP_k$, whose operator norm is
+$2|c_jc_k|$. Hence the weighted anticommutation graph is the leading-order object
+controlling the ordering-dependent error (this is
+Theorem~\ref{thm:trotter-ordering}).
+
+\paragraph{The schedule-level surrogate.} The bound is over all pairs $a<b$, but the
+ordering matters most for \emph{adjacent} pairs in the product, which dominate a
+single step. The clean, ordering-only, interpretable surrogate we minimise is
+therefore the coefficient-weighted number of adjacent anticommuting pairs in the
+schedule (\texttt{policies.adjacent\_anticommutations}). Driving that count down is
+exactly what the commutator ordering does, at no change to the gate proxy.
+
+\section{The five term-ordering policies}
+\label{si:policies}
+\emph{Source file:} \texttt{src/topoham/policies.py}. A policy maps a Hamiltonian to
+a permutation of its term indices (the order the per-term rotations are applied in a
+step). Since the gate proxy $L\cdot r$ is invariant under reordering, all policies
+are compared at identical cost; only the error changes.
+\begin{description}[leftmargin=1.4em,itemsep=2pt]
+  \item[\texttt{random}] a seeded shuffle (the control / baseline).
+  \item[\texttt{coefficient}] terms by $|c_j|$ descending---a chemistry-folklore
+    heuristic.
+  \item[\texttt{locality}] terms by qubit support then weight---keeps
+    spatially-overlapping (hence often anticommuting) terms together; deliberately a
+    ``bad-on-purpose'' comparison for the adjacency count.
+  \item[\texttt{commutator}] the contribution. A greedy walk on $\calG(H)$: start
+    from the largest-$|c_j|$ term; repeatedly append the unused term that
+    \emph{commutes} with the current tail if one exists (a graph non-edge, hence zero
+    first-order error at that junction); failing that, the anticommuting term with
+    the smallest coefficient product $|c_{\mathrm{tail}}|\,|c_j|$ (the cheapest
+    unavoidable commutator), with ties broken toward shared qubit support and then
+    larger coefficient. The cost tuple in code is
+    $(\,\mathbb{1}[\text{anticommutes}],\ \text{weighted cost},\ -|\text{shared}|,\
+    -|c_j|,\ j\,)$, compared lexicographically. This directly minimises the weighted
+    adjacent-anticommutation count.
+  \item[\texttt{learned}] a tiny router (Sec.~\ref{si:router}) that reads the eight
+    commutator-graph features and predicts which fixed strategy will win on this
+    instance, then returns that strategy's ordering.
+\end{description}
+
+\section{The learned router (what makes it ``machine learning'')}
+\label{si:router}
+\emph{Source: \texttt{policies.LearnedOrderingPolicy}; Methods,
+Sec.~\ref{sec:router_method}.} We do \emph{not} learn a permutation end-to-end (a
+black box over the term sequence). Instead we learn a classifier over interpretable
+features. The \emph{features} are the eight listing-order-invariant scalars of
+$\calG(H)$ (Sec.~\ref{si:graph}), standardised (subtract mean, divide by per-feature
+standard deviation, so Euclidean geometry is meaningful across heterogeneous
+features). The \emph{label} is ``which of the fixed strategies attained the highest
+fidelity on this instance'' (\texttt{runner.\_best\_fixed\_strategy}). The
+\emph{model} is a scikit-learn \texttt{StandardScaler}$\to$\texttt{LogisticRegression}
+pipeline (the simplest interpretable multiclass classifier); it falls back to the
+commutator strategy when the training labels are single-class (nothing to
+discriminate). At inference the router predicts the best strategy and returns
+\emph{that strategy's} ordering---a selector over the human-readable policies, not a
+black box. Because its inputs are graph invariants, the router's choice is invariant
+to how the terms are listed.
+
+\paragraph{No leakage (leave-one-instance-out).} For each \emph{test} instance the
+router is trained on the (features, best-strategy) pairs of all the \emph{other}
+instances only, so no test instance ever informs its own predictor
+(\texttt{runner.run}, with \texttt{train\_idx} excluding $i$). This is the honest
+analogue of the family-held-out split in sibling work.
+
+\section{The matched-cost evaluation}
+\label{si:eval}
+\emph{Source file:} \texttt{src/topoham/env.py}. For each instance and ordering,
+\texttt{TrotterEnv} builds the exact reference $e^{-\ii H t}\ket{\psi_0}$ (dense
+\texttt{scipy} \texttt{expm}, cross-checked against Krylov \texttt{expm\_multiply};
+probe state $\ket{+}^{\otimes n}$) and the Trotter state $U_{\mathrm{Trot}}(\pi)\ket{\psi_0}$
+via the Pauli kernel of Sec.~\ref{si:pauli}. It scores: the fidelity
+$\abs{\bra{\psi_{\mathrm{exact}}}\psi_{\mathrm{Trot}}\rangle}^2\in[0,1]$ (1 = perfect);
+the infidelity $1-\text{fidelity}$; the observable error
+$\abs{\langle Z_0\rangle_{\mathrm{exact}}-\langle Z_0\rangle_{\mathrm{Trot}}}$ (a
+physical check); and the gate proxy $L\cdot r$ (one rotation per term per step)---the
+cost, invariant under reordering, reported alongside every comparison. The frontier
+sweeps $r$ over $\{1,2,3,4,6,8,12\}$; for each $r$ we average the per-instance gate
+proxy and fidelity, tracing fidelity versus gate budget at fixed $r$.
+
+\section{Metrics, aggregation, and provenance}
+\label{si:metrics}
+\emph{Source files:} \texttt{metrics.py}, \texttt{seed.py}, \texttt{runner.py}. Per
+ordering we report the mean fidelity over the $N$ instances with a 95\% confidence
+interval $\mathrm{CI}=1.96\,\hat\sigma/\sqrt{N}$ ($\hat\sigma$ = sample standard
+deviation; \texttt{metrics.summarize}). The per-family breakdown reports the same
+over the $N=\sync{40}$ instances per family. The frontier additionally carries a
+derived 95\% CI half-width per point so the figures can shade an uncertainty band;
+that band is derived from the same instance fidelities being averaged and changes no
+reported mean. \texttt{runner.run} writes \texttt{results/summary.json}---the single
+source of truth---with full provenance (seed, exact command, platform, package
+versions, runtime, peak memory, and the \texttt{pauli\_algebra\_verified} flag).
+Nothing in the paper is typed by hand. The table is built as \texttt{summary.json}
+$\to$ \texttt{make\_tables.py} $\to$ \texttt{results/\allowbreak main\allowbreak\_results.tex},
+and the figures as \texttt{summary.json} $\to$ \texttt{make\_figures.py} $\to$
+the three \texttt{figures/*.pdf} (\texttt{fig\_schematic}, \texttt{fig\_frontier},
+\texttt{fig\_family}).
+Figures are produced by \texttt{src/topoham/plotting.py} in \emph{Nature Machine
+Intelligence} house style: vector PDF (\texttt{pdf.fonttype=42}, editable text),
+sans-serif, colour-blind-safe Okabe--Ito palette, no in-plot titles (the description
+lives in the caption), bold lower-case panel labels, and uncertainty on every
+quantitative panel (shaded 95\% CI on the frontier, 95\% CI error bars on the family
+bars). \texttt{fig\_schematic} draws the Figure-1 method overview programmatically.
+
+\section{How to reproduce everything}
+\label{si:reproduce}
+From \texttt{submission/code}, with the Conda environment active:
+\begin{verbatim}
+pip install -e .                      # or pip install -e ".[gpu]"
+make test                             # Pauli algebra (1e-9), Trotter
+                                      # convergence, metrics, ordering claim
+export KMP_DUPLICATE_LIB_OK=TRUE
+bash scripts/reproduce_all.sh full    # writes summary.json, table, figures
+\end{verbatim}
+The reported run (\texttt{configs/full.yaml}, seed $0$): \sync{120} instances
+($3$ families $\times$ $5$ sizes $n\in\{4,\dots,8\}$ $\times$ $8$ seeded draws),
+time $t=2.0$, fixed step budget $r=3$, frontier grid $\{1,2,3,4,6,8,12\}$, mean gate
+proxy \sync{48}. Headline: commutator ordering raises mean fidelity from
+\sync{$0.205\pm0.040$} (random) to \sync{$0.548\pm0.068$}, a \sync{$1.76\times$}
+infidelity reduction at the identical gate proxy, while cutting adjacent
+anticommuting pairs from \sync{3.08} (random) to \sync{0.28}. The table and figure
+artifacts are copied verbatim into the \texttt{submission/} folder used to build
+this manuscript.
+
+\section{What the result means (and what it does not)}
+\label{si:meaning}
+\emph{Defensible:} term ordering materially changes first-order Trotter fidelity at
+zero extra gate cost, and a commutator-graph ordering reaches the high-fidelity end
+of that range while minimising the adjacent anticommuting pairs that the leading
+error penalises (Sec.~\ref{si:why-ordering}). The ordering-versus-random gap is
+large with disjoint confidence intervals---statistically clear.
+\emph{Not claimed:} among the non-random orderings (commutator \sync{0.548},
+coefficient \sync{0.550}, learned \sync{0.549}) the fidelity differences are
+\emph{within} the confidence intervals; we do not claim the commutator policy is
+better than the coefficient heuristic on fidelity, and the learned router
+\emph{tracks} rather than beats the best fixed strategy. On the dense molecular-like
+family the whole ordering effect is within noise at this budget---an honest negative
+result we report rather than omit. This is a clean, reproducible characterisation of
+a no-cost lever, not a claim of hardware advantage: first-order only, $n\le8$ (exact
+reference tractable), synthetic / structured Hamiltonians, classical CPU simulation,
+and a gate-count \emph{proxy} ($L\cdot r$).
 
 % ============================================================
 \bibliographystyle{unsrtnat}
