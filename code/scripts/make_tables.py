@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Generate LaTeX/Markdown tables from results/summary.json."""
+"""Generate LaTeX tables from results/summary.json."""
 import json
 from pathlib import Path
 
@@ -27,14 +27,8 @@ def main() -> None:
     lines += [r"\bottomrule", r"\end{tabular}"]
     (tables / "main_results.tex").write_text("\n".join(lines) + "\n")
 
-    # Markdown (for the README)
-    md = ["| ordering | fidelity | ±95% CI | infidelity | adj. anticomm. | gate proxy |",
-          "|---|---|---|---|---|---|"]
-    for ordng, mean, ci, inf, adj, g in rows:
-        md.append(f"| {ordng} | {mean:.4f} | {ci:.4f} | {inf:.4f} | {adj:.2f} | {g} |")
-    (tables / "main_results.md").write_text("\n".join(md) + "\n")
-    print("wrote results/main_results.tex, results/main_results.md")
-    print("\n".join(md))
+    print("wrote results/main_results.tex")
+    print("\n".join(lines))
 
 
 if __name__ == "__main__":

@@ -161,6 +161,32 @@ lever, not a claim of advantage.
 \section{Results}
 \label{sec:results}
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{fig_schematic.pdf}
+    \caption{\textbf{Overview of the commutator-graph term-ordering benchmark.}
+    A structured Hamiltonian instance, drawn from one of three families
+    (transverse-field Ising, Heisenberg, random molecular-like), is decomposed
+    into its Pauli terms $H=\sum_j c_j P_j$. The \emph{commutator graph}
+    $\calG(H)$ places one node per term and an edge between every anticommuting
+    pair (an $O(n)$ parity test). A term ordering $\pi$ is then fixed either by a
+    greedy walk on $\calG(H)$ or by a learned router over eight graph features;
+    crucially, reordering changes no gate, so the gate-budget proxy $L\cdot r$ is
+    invariant. The first-order Trotter schedule $U_{\mathrm{Trot}}(\pi)$ is
+    evaluated by an exact, matrix-free statevector simulator, and quality is
+    scored as the fidelity against the exact propagator $e^{-\ii Ht}$ at the
+    identical gate budget. Two internal guarantees underpin the benchmark: the
+    fast Pauli-rotation kernel and dense \texttt{expm} agree to $10^{-9}$ before
+    any fidelity is emitted, and the leading first-order Trotter error is
+    proportional to the number of adjacent anticommuting pairs in the schedule
+    (Theorem~\ref{thm:trotter-ordering})---the ordering-only quantity the
+    commutator policy minimizes.}
+    \label{fig:schematic}
+\end{figure}
+
+Figure~\ref{fig:schematic} summarizes the end-to-end pipeline that the
+following sections quantify.
+
 \subsection{Commutator-graph ordering and the matched-cost protocol}
 \label{sec:framework}
 
@@ -264,10 +290,11 @@ overlaps them to within line width, again consistent with the within-noise readi
     \centering
     \includegraphics[width=0.75\textwidth]{fig_frontier.pdf}
     \caption{Fidelity versus gate-budget proxy ($L\cdot r$) for the five term
-    orderings, averaged over the \sync{120} instances as the Trotter step count
-    sweeps $\{1,2,3,4,6,8,12\}$. Random ordering is dominated at every budget; the
-    non-random orderings are nearly coincident, consistent with the within-noise
-    reading of Table~\ref{tab:main}.}
+    orderings as the Trotter step count sweeps $\{1,2,3,4,6,8,12\}$. Lines are
+    means over the $n=\sync{120}$ instances; shaded bands are 95\% confidence
+    intervals ($1.96\,s/\sqrt{n}$) on each mean. Random ordering is dominated at
+    every budget; the non-random orderings are nearly coincident (their bands
+    overlap), consistent with the within-noise reading of Table~\ref{tab:main}.}
     \label{fig:frontier}
 \end{figure}
 
@@ -300,10 +327,12 @@ where ordering helps and where it does not.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth]{fig_family.pdf}
-    \caption{Mean Trotter fidelity by Hamiltonian family for each ordering (reported
-    scale). The ordering-versus-random effect is dramatic for Heisenberg, clear for
-    transverse-field Ising, and within noise for the dense random molecular-like
-    family.}
+    \caption{Mean Trotter fidelity by Hamiltonian family for each ordering
+    (reported scale). Bars are means over the $n=\sync{40}$ instances per family
+    (five sizes $\times$ eight seeded draws); error bars are 95\% confidence
+    intervals ($1.96\,s/\sqrt{n}$). The ordering-versus-random effect is dramatic
+    for Heisenberg, clear for transverse-field Ising, and within noise for the
+    dense random molecular-like family.}
     \label{fig:family}
 \end{figure}
 

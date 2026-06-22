@@ -18,7 +18,7 @@ pip install -r requirements.txt && pip install -e .
 ```bash
 make test        # Pauli-rotation ↔ expm cross-check, Trotter convergence, core claim
 make demo        # smoke config (~1-4 s) -> results/summary.json
-make tables      # results/main_results.{tex,md}
+make tables      # results/main_results.tex
 make figures     # figures/fig_frontier.pdf, figures/fig_family.pdf
 make audit       # readiness gate
 make full-run    # reported-scale config (minutes)
@@ -56,3 +56,4 @@ dense `expm` before any fidelity number was produced. It is the single source of
 truth for every table, figure and macro.
 
 All experiments are reproducible on commodity hardware; runtime and memory are reported for each benchmark.
+A from-basics explanation of the Pauli, commutator-graph, and Trotter objects is in `THEORY.txt`.

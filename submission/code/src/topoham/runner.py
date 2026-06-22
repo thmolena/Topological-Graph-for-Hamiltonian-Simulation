@@ -153,11 +153,20 @@ def run(cfg: Config, out_dir: Path) -> Dict:
                 fid_by_r[ordng][r].append(env.evaluate(order)["fidelity"])
     frontier: Dict[str, List[list]] = {}
     for ordng in ORDERINGS:
-        frontier[ordng] = [
-            [int(round(float(np.mean(gp_by_r[r])))),
-             round(float(np.mean(fid_by_r[ordng][r])), 6)]
-            for r in cfg.steps_grid
-        ]
+        points = []
+        for r in cfg.steps_grid:
+            vals = np.asarray(fid_by_r[ordng][r], dtype=float)
+            n = max(1, vals.size)
+            # 95% confidence interval half-width on the plotted mean fidelity:
+            # 1.96 * sample_std / sqrt(n). This is a derived uncertainty for the
+            # shaded band only; the mean (the reported quantity) is unchanged.
+            ci95 = 1.96 * float(vals.std(ddof=1)) / np.sqrt(n) if n > 1 else 0.0
+            points.append([
+                int(round(float(np.mean(gp_by_r[r])))),
+                round(float(vals.mean()), 6),
+                round(ci95, 6),
+            ])
+        frontier[ordng] = points
 
     # 5. Aggregate.
     summary: Dict = {
