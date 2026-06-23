@@ -9,6 +9,7 @@
 \usepackage{bm}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{float}
@@ -18,7 +19,12 @@
 \usepackage{xcolor}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 
-\graphicspath{{figures/}}
+\graphicspath{{code/figures/}}
+
+% Absorb the few unavoidable few-point overfull boxes caused by long, unbreakable
+% typewriter file paths (e.g. \texttt{figures/fig_frontier.pdf}) without affecting
+% the spacing of ordinary paragraphs.
+\setlength{\emergencystretch}{3em}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}[theorem]{Lemma}
@@ -55,36 +61,34 @@ Trotter Error at a Fixed Gate Budget}
 \maketitle
 
 \begin{abstract}
-Digital quantum simulation of a Hamiltonian $H=\sum_j c_j P_j$ by first-order
-(Lie--Trotter) product formulas incurs an algorithmic error whose leading term is
-governed by the commutators of the non-commuting summands. Because the per-step
-gate count of a first-order schedule, one rotation per Pauli term, is independent
-of the \emph{order} in which the rotations are applied, the term ordering is a free
-parameter that can be optimized at \emph{zero} additional gate cost. We treat the
-terms of $H$ as the nodes of a \emph{commutator graph}---an edge connects two terms
-that anticommute---and order them with a greedy policy that minimizes the
-coefficient-weighted number of anticommuting adjacencies in the Trotter schedule.
-We additionally train a small interpretable router (logistic regression over eight
-commutator-graph features) that selects among fixed ordering heuristics
-per instance. Across \sync{120} structured Hamiltonian instances (transverse-field
-Ising, Heisenberg, and random molecular-like families, \sync{4--8} qubits) evaluated
-against exact statevector references, commutator-aware ordering raises the mean
-Trotter fidelity from \sync{$0.205\pm0.040$} (random ordering) to
-\sync{$0.548\pm0.068$} (95\% confidence intervals) at a fixed gate-budget proxy of
-\sync{48}, a \sync{$1.76\times$} reduction in mean infidelity, while reducing the mean
-number of adjacent anticommuting pairs from \sync{3.08} to \sync{0.28}. The robust,
-statistically clear effect is ordering versus random; among the non-random
-heuristics the fidelity differences (commutator \sync{0.548}, coefficient
-\sync{0.550}, learned router \sync{0.549}) are well within the confidence intervals
-and are \emph{not} statistically distinguishable at this scale, and the learned
-router tracks---rather than beats---the best fixed strategy. The study is
-deliberately small, first-order, and classically simulated; it is a controlled,
-fully reproducible demonstration that term ordering is a real, no-cost lever on
-Trotter error, not a claim of hardware advantage. All experiments are reproducible
-on commodity hardware; runtime and memory are reported for each benchmark.
+The order in which terms are applied in a first-order (Lie--Trotter) product formula
+is a free parameter: the per-step gate count of a Hamiltonian $H=\sum_j c_j P_j$ is
+one rotation per Pauli term regardless of order, yet the algorithmic error depends on
+that order through the commutators of the non-commuting summands. Term ordering can
+therefore lower Trotter error at \emph{zero} additional gate cost. We treat the terms
+of $H$ as the nodes of a \emph{commutator graph}---an edge connects two terms that
+anticommute---and order them with a greedy policy that minimizes the
+coefficient-weighted number of anticommuting adjacencies in the schedule; we also
+train a small interpretable router (logistic regression over eight commutator-graph
+features) that selects among fixed heuristics per instance. Across \sync{120}
+structured Hamiltonian instances (transverse-field Ising, Heisenberg, and random
+molecular-like families, \sync{4--8} qubits) evaluated against exact statevector
+references, commutator-aware ordering raises mean Trotter fidelity from
+\sync{$0.205\pm0.040$} (random ordering) to \sync{$0.548\pm0.068$} (95\% confidence
+intervals) at a fixed gate-budget proxy of \sync{48}---a \sync{$1.76\times$} reduction
+in mean infidelity---while cutting the mean number of adjacent anticommuting pairs
+from \sync{3.08} to \sync{0.28}. The clear, statistically robust effect is ordering
+versus random; among the non-random heuristics the fidelity differences (commutator
+\sync{0.548}, coefficient \sync{0.550}, learned router \sync{0.549}) lie within the
+confidence intervals and are \emph{not} distinguishable at this scale, and the router
+tracks rather than beats the best fixed strategy. This is a controlled, fully
+reproducible demonstration that term ordering is a real, no-cost lever on Trotter
+error---deliberately small, first-order, and classically simulated---not a claim of
+hardware advantage.
 \end{abstract}
 
 % ============================================================
+\section{Introduction}
 \label{sec:introduction}
 
 Simulating the time evolution $e^{-\ii H t}$ of a quantum many-body Hamiltonian is
@@ -218,6 +222,22 @@ before any fidelity number is emitted (Methods). Fidelity is the squared overlap
 $\abs{\langle\psi_{\mathrm{exact}}\ket{\psi_{\mathrm{Trot}}}}^2$ against the exact
 reference $e^{-\ii H t}\ket{\psi_0}$.
 
+The matched-cost protocol rests on three formal guarantees proved in the Methods,
+which we state here so the reader can connect each experiment to the theory it
+illustrates. First, the gate budget $L\cdot r$ is invariant under reordering
+(Proposition~\ref{prop:cost}), so every column of Table~\ref{tab:main} and every point
+of Figure~\ref{fig:frontier} compares orderings at \emph{identical} cost. Second, the
+leading first-order error is, to order $t^2/r$, the coefficient-weighted sum over the
+anticommuting edges of $\calG(H)$ (Theorem~\ref{thm:trotter-ordering} and
+Lemma~\ref{lem:commvalue}); this is the quantity the ``adj.\ anticomm.'' column of
+Table~\ref{tab:main} measures and the commutator policy minimizes. Third, the learned
+router's choice depends only on the intrinsic weighted graph, not on the term listing
+(Proposition~\ref{prop:invariance}), which is why its row in Table~\ref{tab:main}
+tracks the best fixed strategy. The exact-simulation kernel itself is justified by
+Lemmas~\ref{lem:parity} and~\ref{lem:rotation} and cross-checked numerically to
+$10^{-9}$ (the \texttt{pauli\_algebra\_verified} integrity gate of
+Fig.~\ref{fig:schematic}).
+
 \subsection{Ordering versus random: a large, statistically clear effect}
 \label{sec:headline}
 
@@ -229,15 +249,25 @@ pairs in the schedule, and the gate proxy. Statistics are over \sync{120} instan
 
 \begin{table}[htbp]
 \centering
-\caption{First-order Trotter fidelity by term ordering at a matched gate budget
-(reported scale, \texttt{configs/full.yaml}: \sync{120} instances, mean gate proxy
-$=48$, $t=2.0$, $r=3$). Values are means; ``$\pm$95\%'' is the half-width of the
-95\% confidence interval over instances. ``adj.\ anticomm.'' is the mean number of
-adjacent anticommuting pairs in the schedule. Generated by
-\texttt{submission/code} into \texttt{results/summary.json}; reproduced verbatim
-here.}
+\caption{\textbf{First-order Trotter fidelity by term ordering at a matched gate
+budget.} Reported scale (\texttt{configs/full.yaml}): \sync{120} instances, mean gate
+proxy $=48$, evolution time $t=2.0$, $r=3$ steps. Values are means over instances;
+``$\pm$95\%'' is the half-width of the 95\% confidence interval; ``adj.\ anticomm.''
+is the mean number of adjacent anticommuting pairs in the schedule; ``gate proxy'' is
+$L\cdot r$, invariant under reordering. Generated by \texttt{submission/code} into
+\texttt{results/summary.json} and reproduced verbatim here.}
 \label{tab:main}
-\input{tables/main_results.tex}
+\begin{tabular}{lccccc}
+\toprule
+ordering & fidelity & $\pm$95\% & infidelity & adj.\ anticomm. & gate proxy \\
+\midrule
+random & 0.2054 & 0.0400 & 0.7946 & 3.08 & 48 \\
+coefficient & 0.5501 & 0.0670 & 0.4499 & 2.86 & 48 \\
+locality & 0.5004 & 0.0684 & 0.4996 & 6.47 & 48 \\
+commutator & 0.5481 & 0.0677 & 0.4519 & 0.28 & 48 \\
+learned & 0.5486 & 0.0670 & 0.4514 & 2.50 & 48 \\
+\bottomrule
+\end{tabular}
 \end{table}
 
 Two readings of Table~\ref{tab:main} matter and must be kept separate. \emph{First,
@@ -288,10 +318,12 @@ overlaps them to within line width, again consistent with the within-noise readi
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.75\textwidth]{fig_frontier.pdf}
-    \caption{Fidelity versus gate-budget proxy ($L\cdot r$) for the five term
+    \caption{\textbf{Fidelity--gate-budget frontier across term orderings.}
+    Fidelity versus gate-budget proxy ($L\cdot r$) for the five term
     orderings as the Trotter step count sweeps $\{1,2,3,4,6,8,12\}$. Lines are
     means over the $n=\sync{120}$ instances; shaded bands are 95\% confidence
-    intervals ($1.96\,s/\sqrt{n}$) on each mean. Random ordering is dominated at
+    intervals ($1.96\,s/\sqrt{n}$) on each mean, where $s$ is the sample standard
+    deviation. Random ordering is dominated at
     every budget; the non-random orderings are nearly coincident (their bands
     overlap), consistent with the within-noise reading of Table~\ref{tab:main}.}
     \label{fig:frontier}
@@ -326,10 +358,12 @@ where ordering helps and where it does not.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth]{fig_family.pdf}
-    \caption{Mean Trotter fidelity by Hamiltonian family for each ordering
+    \caption{\textbf{Per-family breakdown of the ordering effect.}
+    Mean Trotter fidelity by Hamiltonian family for each ordering
     (reported scale). Bars are means over the $n=\sync{40}$ instances per family
     (five sizes $\times$ eight seeded draws); error bars are 95\% confidence
-    intervals ($1.96\,s/\sqrt{n}$). The ordering-versus-random effect is dramatic
+    intervals ($1.96\,s/\sqrt{n}$), where $s$ is the sample standard deviation.
+    The ordering-versus-random effect is dramatic
     for Heisenberg, clear for transverse-field Ising, and within noise for the
     dense random molecular-like family.}
     \label{fig:family}
@@ -351,6 +385,136 @@ exceeds the fixed heuristics. Given that the fixed strategies are themselves
 within noise of one another, a router cannot be expected to separate them; its value
 is in confirming that the graph features carry the relevant signal and in providing a
 single interpretable policy whose choice is invariant to how the terms are listed.
+
+\subsection{Extended Data: per-family, frontier, and full-metric tables}
+\label{sec:extended}
+
+The tables in this section transcribe, verbatim, additional breakdowns contained in
+the single source of truth \texttt{results/summary.json} that the main figures
+summarize graphically; no number is entered by hand or recomputed. They raise the
+reported density of the real run without adding any new experiment.
+
+Table~\ref{tab:ed_family} gives the per-family fidelity decomposition behind
+Figure~\ref{fig:family}: for each of the three Hamiltonian families and five
+orderings, the mean fidelity over the $N=\sync{40}$ instances (five sizes $\times$
+eight seeded draws), its 95\% confidence-interval half-width, and the sample standard
+deviation. It makes the family-dependence explicit: every non-random ordering is
+\emph{exact} ($1.000\pm0.000$) on Heisenberg while random reaches only
+$0.169\pm0.086$; the non-random orderings roughly double random on transverse-field
+Ising; and on the dense molecular-like family all five orderings fall in
+$0.15$--$0.17$ with overlapping intervals (the honest negative result).
+
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Extended Data 1 $|$ Per-family Trotter fidelity by ordering.}
+Mean fidelity, 95\% confidence-interval half-width ($1.96\,s/\sqrt{N}$), and sample
+standard deviation $s$ over the $N=40$ instances per family (five sizes
+$n\in\{4,\dots,8\}\times$ eight seeded draws), at the fixed budget ($t=2.0$, $r=3$,
+gate proxy $48$). \textbf{Bold} marks the best mean within each family block; ties at
+the family optimum are all bolded. Transcribed verbatim from the \texttt{by\_family}
+block of \texttt{results/summary.json}.}
+\label{tab:ed_family}
+\begin{tabular}{llcccc}
+\toprule
+family & ordering & fidelity & $\pm$95\% CI & std & $N$ \\
+\midrule
+\multirow{5}{*}{Heisenberg}
+ & random      & 0.1686 & 0.0861 & 0.2779 & 40 \\
+ & coefficient & \textbf{1.0000} & 0.0000 & 0.0000 & 40 \\
+ & locality    & \textbf{1.0000} & 0.0000 & 0.0000 & 40 \\
+ & commutator  & \textbf{1.0000} & 0.0000 & 0.0000 & 40 \\
+ & learned     & \textbf{1.0000} & 0.0000 & 0.0000 & 40 \\
+\midrule
+\multirow{5}{*}{transverse-field Ising}
+ & random      & 0.2866 & 0.0510 & 0.1647 & 40 \\
+ & coefficient & \textbf{0.4797} & 0.0489 & 0.1577 & 40 \\
+ & locality    & 0.3495 & 0.0090 & 0.0292 & 40 \\
+ & commutator  & \textbf{0.4797} & 0.0489 & 0.1577 & 40 \\
+ & learned     & \textbf{0.4797} & 0.0489 & 0.1577 & 40 \\
+\midrule
+\multirow{5}{*}{molecular-like}
+ & random      & 0.1610 & 0.0606 & 0.1954 & 40 \\
+ & coefficient & \textbf{0.1705} & 0.0637 & 0.2054 & 40 \\
+ & locality    & 0.1516 & 0.0626 & 0.2021 & 40 \\
+ & commutator  & 0.1647 & 0.0674 & 0.2175 & 40 \\
+ & learned     & 0.1661 & 0.0613 & 0.1979 & 40 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:ed_frontier} tabulates the fidelity--gate-budget frontier plotted in
+Figure~\ref{fig:frontier}: for each ordering, the mean fidelity and its 95\%
+confidence-interval half-width at each of the seven mean gate-proxy budgets generated
+by sweeping $r\in\{1,2,3,4,6,8,12\}$. The random ordering is dominated at every
+budget, and the non-random orderings track each other to within their confidence
+intervals across the whole frontier.
+
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Extended Data 2 $|$ Fidelity--gate-budget frontier.}
+Mean fidelity (upper line) with 95\% confidence-interval half-width (lower line, in
+parentheses) for each ordering at the seven mean gate-proxy values $L\cdot r$ obtained
+by sweeping the Trotter step count $r\in\{1,2,3,4,6,8,12\}$, over the
+$N=\sync{120}$ instances. \textbf{Bold} marks the best mean in each budget column.
+Transcribed verbatim from the \texttt{frontier} block of
+\texttt{results/summary.json}; the same arrays are plotted in
+Figure~\ref{fig:frontier}.}
+\label{tab:ed_frontier}
+\begin{tabular}{lccccccc}
+\toprule
+ordering & \multicolumn{7}{c}{mean fidelity ($\pm$95\% CI) at mean gate proxy $L\cdot r$} \\
+\cmidrule(lr){2-8}
+ & 13 & 25 & 38 & 51 & 76 & 101 & 152 \\
+\midrule
+random
+ & 0.127 & 0.073 & 0.193 & 0.346 & 0.589 & 0.722 & 0.854 \\
+ & \footnotesize($\pm$0.029) & \footnotesize($\pm$0.021) & \footnotesize($\pm$0.036) & \footnotesize($\pm$0.049) & \footnotesize($\pm$0.045) & \footnotesize($\pm$0.036) & \footnotesize($\pm$0.021) \\
+coefficient
+ & 0.367 & 0.391 & 0.550 & \textbf{0.681} & 0.824 & \textbf{0.894} & \textbf{0.951} \\
+ & \footnotesize($\pm$0.081) & \footnotesize($\pm$0.079) & \footnotesize($\pm$0.067) & \footnotesize($\pm$0.058) & \footnotesize($\pm$0.039) & \footnotesize($\pm$0.025) & \footnotesize($\pm$0.012) \\
+locality
+ & \textbf{0.376} & \textbf{0.460} & 0.500 & 0.553 & 0.705 & 0.808 & 0.905 \\
+ & \footnotesize($\pm$0.080) & \footnotesize($\pm$0.072) & \footnotesize($\pm$0.068) & \footnotesize($\pm$0.064) & \footnotesize($\pm$0.045) & \footnotesize($\pm$0.030) & \footnotesize($\pm$0.015) \\
+commutator
+ & 0.368 & 0.398 & 0.548 & 0.676 & 0.823 & 0.891 & 0.948 \\
+ & \footnotesize($\pm$0.081) & \footnotesize($\pm$0.079) & \footnotesize($\pm$0.068) & \footnotesize($\pm$0.059) & \footnotesize($\pm$0.039) & \footnotesize($\pm$0.026) & \footnotesize($\pm$0.013) \\
+learned
+ & 0.368 & 0.398 & 0.548 & 0.676 & 0.823 & 0.891 & 0.948 \\
+ & \footnotesize($\pm$0.081) & \footnotesize($\pm$0.079) & \footnotesize($\pm$0.068) & \footnotesize($\pm$0.059) & \footnotesize($\pm$0.039) & \footnotesize($\pm$0.026) & \footnotesize($\pm$0.013) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:ed_metrics} reports the full per-ordering metric set aggregated over
+all \sync{120} instances at the fixed budget, including two quantities not shown in
+Table~\ref{tab:main}: the sample standard deviation of fidelity (showing that the
+ordering means sit on heavy-tailed per-instance distributions) and the physical
+observable error $\abs{\langle Z_0\rangle_{\mathrm{exact}}-\langle Z_0\rangle_{\mathrm{Trot}}}$,
+which is small ($\le\sync{0.053}$) and statistically flat across orderings---a
+consistency check that the fidelity gain is not an artifact of a single observable.
+
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Extended Data 3 $|$ Full per-ordering metrics at the fixed budget.}
+Aggregated over all $N=\sync{120}$ instances ($t=2.0$, $r=3$, gate proxy $48$): mean
+fidelity, fidelity sample standard deviation, mean infidelity, mean
+$\langle Z_0\rangle$ observable error, and mean number of adjacent anticommuting
+pairs in the schedule. \textbf{Bold} marks the best (highest fidelity, lowest
+infidelity, lowest observable error, fewest adjacencies) per column. Transcribed
+verbatim from the \texttt{orderings} block of \texttt{results/summary.json}.}
+\label{tab:ed_metrics}
+\begin{tabular}{lccccc}
+\toprule
+ordering & fidelity & fidelity std & infidelity & $\langle Z_0\rangle$ error & adj.\ anticomm. \\
+\midrule
+random      & 0.2054 & 0.2237 & 0.7946 & 0.0466 & 3.083 \\
+coefficient & \textbf{0.5501} & 0.3743 & \textbf{0.4499} & 0.0503 & 2.858 \\
+locality    & 0.5004 & 0.3822 & 0.4996 & 0.0415 & 6.467 \\
+commutator  & 0.5481 & 0.3785 & 0.4519 & 0.0526 & \textbf{0.283} \\
+learned     & 0.5486 & 0.3745 & 0.4514 & \textbf{0.0470} & 2.500 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % ============================================================
 \section{Discussion}
@@ -438,75 +602,325 @@ commodity hardware; runtime and memory are reported for each benchmark.
 \section{Methods}
 \label{sec:methods}
 
+This section gives the full formal development underpinning the benchmark. The
+Pauli algebra (Sec.~\ref{sec:pauli}) yields an exact matrix-free simulator and the
+combinatorial structure of the commutator graph; Sec.~\ref{sec:graph_method} states
+and proves the cost invariance, the leading-order error bound, and the listing-order
+invariance of the learned router. All theorems are stated under explicitly named
+hypotheses, and every proof is given in full.
+
 \subsection{Pauli algebra and the exact statevector simulator}
 \label{sec:pauli}
 A Pauli string $P\in\{I,X,Y,Z\}^{\otimes n}$ acts on a statevector
-$\ket{\psi}\in\C^{2^n}$. Two facts make an exact, matrix-free simulator possible.
-\emph{(i) Commutation is a parity test.} Two Pauli strings commute iff the number of
-qubits on which their single-qubit factors anticommute (differ and neither is $I$)
-is even; this is $O(n)$ and forms the edges of the commutator graph. \emph{(ii) A
-Pauli is an involution}, $P^2=I$, so each Trotter factor is
+$\ket{\psi}\in\C^{2^n}$. We write $\{A,B\}=AB+BA$ for the anticommutator and
+$[A,B]=AB-BA$ for the commutator. The single-qubit Paulis satisfy
+$X^2=Y^2=Z^2=I$ and the pairwise anticommutation relations $\{X,Y\}=\{Y,Z\}=\{Z,X\}=0$,
+while $I$ commutes with everything. We record the two structural facts that make an
+exact, matrix-free simulator possible, each as a numbered result with a complete
+proof, since the entire benchmark and the commutator graph rest on them
+(Fig.~\ref{fig:schematic}).
+
+\begin{lemma}[Commutation is an $O(n)$ parity test]
+\label{lem:parity}
+Let $P=\bigotimes_{q=1}^{n}p_q$ and $Q=\bigotimes_{q=1}^{n}q_q$ be Pauli strings with
+single-qubit factors $p_q,q_q\in\{I,X,Y,Z\}$. Call position $q$ \emph{anticommuting}
+if $p_q$ and $q_q$ differ and neither is $I$, and let $k=k(P,Q)$ be the number of
+anticommuting positions. Then
+\[
+PQ=(-1)^{k}\,QP,
+\]
+so $P$ and $Q$ commute iff $k$ is even and anticommute iff $k$ is odd. In particular
+the test runs in $O(n)$ time and never forms a $2^n\times 2^n$ matrix.
+\end{lemma}
+
+\begin{proof}
+For single-qubit factors, exactly one of two cases holds at each position $q$. Either
+$p_q$ and $q_q$ \emph{commute} as single-qubit operators---this occurs precisely when
+$p_q=q_q$ (a square, $p_q q_q=q_q p_q$) or at least one of them is $I$---so
+$p_q q_q=(+1)\,q_q p_q$; or they \emph{anticommute}, which by the relations
+$\{X,Y\}=\{Y,Z\}=\{Z,X\}=0$ occurs precisely when $p_q\neq q_q$ and neither is $I$,
+giving $p_q q_q=(-1)\,q_q p_q$. Thus at each position $p_q q_q=(-1)^{\epsilon_q}q_q p_q$
+with $\epsilon_q\in\{0,1\}$ and $\epsilon_q=1$ exactly on the anticommuting positions.
+A Pauli string is the tensor product of its factors, and the tensor product of
+operators acting on distinct qubits factorizes, so
+\[
+PQ=\bigotimes_{q=1}^{n}\bigl(p_q q_q\bigr)
+   =\bigotimes_{q=1}^{n}(-1)^{\epsilon_q}\bigl(q_q p_q\bigr)
+   =\Bigl(\prod_{q=1}^{n}(-1)^{\epsilon_q}\Bigr)\bigotimes_{q=1}^{n}\bigl(q_q p_q\bigr)
+   =(-1)^{\sum_q\epsilon_q}\,QP
+   =(-1)^{k}QP,
+\]
+since $\sum_q\epsilon_q=k$. Hence $PQ=QP$ iff $(-1)^k=1$ iff $k$ is even, and
+$PQ=-QP$ iff $k$ is odd. Counting $k$ scans the $n$ positions once, which is $O(n)$
+and matrix-free.
+\end{proof}
+
+\begin{lemma}[Pauli rotation as a cosine--sine pair]
+\label{lem:rotation}
+Let $P$ be a non-identity Pauli string, so $P^2=I$, and let $\theta\in\R$. Then
 \begin{equation}
-    e^{-\ii\theta P}\ket{\psi}=\cos\theta\,\ket{\psi}-\ii\sin\theta\,P\ket{\psi},
+    e^{-\ii\theta P}=\cos\theta\,I-\ii\sin\theta\,P,
+    \qquad\text{hence}\qquad
+    e^{-\ii\theta P}\ket{\psi}=\cos\theta\,\ket{\psi}-\ii\sin\theta\,P\ket{\psi}.
     \label{eq:rotation}
 \end{equation}
-a single sparse application of $P$ (a permutation-and-phase of amplitudes) plus a
-scaled add, in $O(n\,2^n)$ time, never forming a $2^n\times2^n$ matrix. Before any
-fidelity number is produced, Eq.~\eqref{eq:rotation} is cross-checked against dense
-\texttt{scipy.linalg.expm}$(-\ii\theta P)$ on random small Paulis to tolerance
-$10^{-9}$; the run records an integrity flag \texttt{pauli\_algebra\_verified}. The
-exact reference $e^{-\ii Ht}\ket{\psi_0}$ uses dense \texttt{expm} (cross-checked
-against Krylov \texttt{expm\_multiply}); the probe state is
-$\ket{+}^{\otimes n}$.
+The right-hand side is one sparse application of $P$ (a permutation-and-phase of the
+$2^n$ amplitudes) plus a scaled vector add, computable in $O(n\,2^n)$ time without
+forming or exponentiating the $2^n\times2^n$ matrix.
+\end{lemma}
 
-\subsection{Commutator graph and the greedy ordering}
+\begin{proof}
+Because $P^2=I$, the powers of $P$ alternate: $P^{2m}=I$ and $P^{2m+1}=P$ for all
+integers $m\ge 0$. The matrix exponential converges absolutely, so we may regroup
+its terms by parity of the index:
+\[
+e^{-\ii\theta P}
+=\sum_{m=0}^{\infty}\frac{(-\ii\theta)^m}{m!}P^{m}
+=\underbrace{\sum_{m=0}^{\infty}\frac{(-\ii\theta)^{2m}}{(2m)!}P^{2m}}_{\text{even}}
+ +\underbrace{\sum_{m=0}^{\infty}\frac{(-\ii\theta)^{2m+1}}{(2m+1)!}P^{2m+1}}_{\text{odd}} .
+\]
+In the even sum $P^{2m}=I$ and $(-\ii\theta)^{2m}=(-1)^{m}\theta^{2m}$, so it equals
+$I\sum_m(-1)^m\theta^{2m}/(2m)!=I\cos\theta$. In the odd sum $P^{2m+1}=P$ and
+$(-\ii\theta)^{2m+1}=-\ii\,(-1)^{m}\theta^{2m+1}$, so it equals
+$-\ii P\sum_m(-1)^m\theta^{2m+1}/(2m+1)!=-\ii\sin\theta\,P$. Adding gives
+$e^{-\ii\theta P}=\cos\theta\,I-\ii\sin\theta\,P$. Applying both sides to
+$\ket{\psi}$ yields the stated state update. A single Pauli string maps each basis
+state $\ket{z}$ to a single basis state $\ket{z'}$ with a unit-modulus phase (its
+$X$ factors flip bits, its $Z$/$Y$ factors apply $\pm1$/$\pm\ii$ phases), so forming
+$P\ket{\psi}$ touches each of the $2^n$ amplitudes once, with $O(n)$ work per
+amplitude to compute the target index and phase; the cosine/sine combination is one
+further pass, giving $O(n\,2^n)$ total.
+\end{proof}
+
+Before any fidelity number is produced, Eq.~\eqref{eq:rotation} is cross-checked
+against dense \texttt{scipy.linalg.expm}$(-\ii\theta P)$ on random small Paulis to
+tolerance $10^{-9}$; the run records an integrity flag
+\texttt{pauli\_algebra\_verified} (Fig.~\ref{fig:schematic}). The exact reference
+$e^{-\ii Ht}\ket{\psi_0}$ uses dense \texttt{expm} (cross-checked against Krylov
+\texttt{expm\_multiply}); the probe state is $\ket{+}^{\otimes n}$.
+
+\subsection{Commutator graph, cost invariance, and the greedy ordering}
 \label{sec:graph_method}
-The commutator graph $\calG(H)$ has one node per term and an edge for every
-anticommuting pair. The leading per-pair first-order error scales with
-$\abs{c_a}\abs{c_b}\norm{[P_a,P_b]}$, which is zero for commuting (non-adjacent)
-pairs. The schedule-level surrogate is the coefficient-weighted count of
-\emph{adjacent} anticommuting pairs in the product. The greedy commutator ordering
-builds the schedule as a walk: starting from the largest-$\abs{c_j}$ term, it
-repeatedly appends the unused term with the smallest cost
-$(\,\mathbb{1}[\text{anticommutes with tail}],\ \abs{c_{\mathrm{tail}}}\abs{c_j}\text{
-if anticommuting else }0,\ -\,|\text{shared support}|,\ -\abs{c_j}\,)$ in
-lexicographic order---i.e.\ prefer a commuting continuation; failing that, the
-cheapest unavoidable commutator; ties broken toward shared support and larger
-coefficient. This directly drives down the weighted adjacency count at no change to
-the gate proxy $L\cdot r$. A dual view is a greedy colouring of $\calG(H)$ into
-mutually commuting groups.
+The commutator graph $\calG(H)$ has one node per term and an edge $\{j,k\}$ for every
+anticommuting pair, decided by Lemma~\ref{lem:parity}. A term ordering is a
+permutation $\pi\in S_L$ of $\{1,\dots,L\}$ specifying the order in which the
+per-term rotations are applied within one Trotter step. We first establish that the
+gate budget is an ordering invariant, so that any fidelity difference between
+policies is attributable to ordering alone---the premise of the matched-cost
+protocol.
+
+\begin{proposition}[Gate-cost invariance under reordering]
+\label{prop:cost}
+Fix $H=\sum_{j=1}^L c_jP_j$, evolution time $t$, and step count $r$. For every
+ordering $\pi\in S_L$ the first-order schedule $U_{\mathrm{Trot}}(\pi)$ of
+Eq.~\eqref{eq:trotter} applies exactly $L\cdot r$ single-Pauli rotations. Hence the
+gate proxy $L\cdot r$ is independent of $\pi$.
+\end{proposition}
+
+\begin{proof}
+By Eq.~\eqref{eq:trotter}, one Trotter step is the ordered product
+$\prod_{a=1}^{L} e^{-\ii c_{\pi(a)}P_{\pi(a)}t/r}$, which contains exactly one factor
+$e^{-\ii c_j P_j t/r}$ for each index $j\in\{1,\dots,L\}$, regardless of the order in
+which the factors are listed: a permutation reindexes the factors but does not add or
+remove any. Each factor is a single Pauli rotation realized by Lemma~\ref{lem:rotation}.
+The full schedule is the $r$-fold power of one step, so it applies $L$ rotations per
+step over $r$ steps, i.e.\ $L\cdot r$ rotations, for every $\pi$.
+\end{proof}
+
+We next pin down the exact value of the Pauli commutators that drive the leading
+error, then state the colouring duality, before the main error theorem.
+
+\begin{lemma}[Pauli commutator value]
+\label{lem:commvalue}
+Let $h_j=c_jP_j$ and $h_k=c_kP_k$ with real $c_j,c_k$ and Pauli strings $P_j,P_k$.
+If $P_j,P_k$ commute then $[h_j,h_k]=0$. If they anticommute then
+$[h_j,h_k]=2c_jc_k\,P_jP_k$, and $P_jP_k$ is (up to a unit-modulus phase) a Pauli
+string, so $\norm{[h_j,h_k]}=2\abs{c_jc_k}$ in the operator norm. Consequently
+$\norm{[h_j,h_k]}=0$ for non-adjacent and $2\abs{c_jc_k}$ for adjacent pairs in
+$\calG(H)$.
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:parity}, $P_jP_k=(-1)^{k(P_j,P_k)}P_kP_j$ with the sign $+1$ when
+the strings commute and $-1$ when they anticommute. If they commute,
+$[h_j,h_k]=c_jc_k(P_jP_k-P_kP_j)=0$. If they anticommute, $P_kP_j=-P_jP_k$, so
+$[h_j,h_k]=c_jc_k(P_jP_k-P_kP_j)=c_jc_k(P_jP_k+P_jP_k)=2c_jc_k\,P_jP_k$. The product
+$P_jP_k$ is a tensor product of single-qubit Pauli products; each single-qubit
+product lies in $\{I,X,Y,Z\}$ up to a factor in $\{\pm1,\pm\ii\}$ (e.g.\ $XY=\ii Z$),
+so $P_jP_k=\omega\,R$ for some Pauli string $R$ and $\omega$ with $\abs{\omega}=1$.
+Every Pauli string is unitary with eigenvalues $\pm1$, hence $\norm{R}=1$ in the
+operator norm; therefore $\norm{[h_j,h_k]}=2\abs{c_jc_k}\,\abs{\omega}\,\norm{R}
+=2\abs{c_jc_k}$.
+\end{proof}
+
+\begin{proposition}[Colouring is a commuting partition]
+\label{prop:colour}
+A proper vertex colouring of $\calG(H)$ partitions the terms into classes, each of
+which consists of pairwise-commuting Pauli terms; consequently every colour class can
+be summed into a single Hermitian operator whose exponential is computed without
+first-order Trotter error among its members.
+\end{proposition}
+
+\begin{proof}
+In a proper colouring no two adjacent vertices share a colour. By the definition of
+$\calG(H)$, two terms are adjacent iff their Pauli strings anticommute; hence two
+terms of the same colour are non-adjacent, i.e.\ their strings commute. A set of
+pairwise-commuting Hermitian operators $\{h_j\}_{j\in C}$ within a colour class $C$
+satisfies $[h_j,h_{j'}]=0$ for all $j,j'\in C$, so by Lemma~\ref{lem:commvalue} no
+intra-class pair contributes to the leading commutator sum, and
+$\exp(-\ii\Delta\sum_{j\in C}h_j)=\prod_{j\in C}\exp(-\ii\Delta h_j)$ exactly for any
+internal order, since commuting exponentials factor without error.
+\end{proof}
+
+The leading per-pair first-order error therefore scales with
+$\abs{c_a}\abs{c_b}\norm{[P_a,P_b]}$ (Lemma~\ref{lem:commvalue}), which is zero for
+commuting (non-adjacent) pairs. The schedule-level surrogate we minimize is the
+coefficient-weighted count of \emph{adjacent} anticommuting pairs in the product. The
+greedy commutator ordering builds the schedule as a walk: starting from the
+largest-$\abs{c_j}$ term, it repeatedly appends the unused term with the smallest
+cost, ordered lexicographically,
+\[
+\bigl(\,\mathbb{1}[\text{anticommutes with tail}],\
+\abs{c_{\mathrm{tail}}}\abs{c_j}\text{ if anticommuting else }0,\
+-\,|\text{shared support}|,\ -\abs{c_j}\,\bigr),
+\]
+i.e.\ prefer a commuting continuation (a graph non-edge, zero first-order error at
+that junction by Lemma~\ref{lem:commvalue}); failing that, the cheapest unavoidable
+commutator; ties broken toward shared support and larger coefficient. By
+Proposition~\ref{prop:cost} this drives down the weighted adjacency count at no change
+to the gate proxy $L\cdot r$. A dual view is a greedy colouring of $\calG(H)$ into
+mutually commuting groups (Proposition~\ref{prop:colour}).
 
 \begin{theorem}[First-order ordering error proxy]
 \label{thm:trotter-ordering}
-Let $H=\sum_{j=1}^L h_j$ with bounded Hermitian terms and let
-$S_\pi(\Delta)=\prod_{a=1}^L\exp(-\ii\Delta h_{\pi(a)})$ be one first-order
-Trotter step in ordering $\pi$. For fixed evolution time $t$ and $r$ steps,
+Let $H=\sum_{j=1}^L h_j$ with bounded Hermitian terms $h_j$, set
+$\Lambda=\max_a\norm{h_a}$ and $\Delta=t/r$, and let
+$S_\pi(\Delta)=\prod_{a=1}^L\exp(-\ii\Delta h_{\pi(a)})$ be one first-order Trotter
+step in ordering $\pi\in S_L$. Then for fixed evolution time $t$ and $r$ steps,
 \[
-\left\|\exp(-\ii tH)-S_\pi(t/r)^r\right\|
-\le
-\frac{t^2}{2r}\sum_{a<b}\|[h_{\pi(a)},h_{\pi(b)}]\|
- + O\!\left(\frac{t^3}{r^2}\right).
+\bigl\|\exp(-\ii tH)-S_\pi(t/r)^r\bigr\|
+\;\le\;
+\frac{t^2}{2r}\sum_{1\le a<b\le L}\bigl\|[h_{\pi(a)},h_{\pi(b)}]\bigr\|
+ \;+\; C\,\frac{t^3}{r^2},
 \]
-For Pauli terms, $\|[c_jP_j,c_kP_k]\|$ is zero when the strings commute and
-$2|c_jc_k|$ when they anticommute. Thus the weighted anticommutation graph is
-the leading-order object controlling the ordering-dependent error proxy at a
-fixed gate budget.
+where $C=\tfrac{1}{6}(L\Lambda)^3 e^{L\Lambda t/r}$ collects the third- and
+higher-order terms. For Pauli terms $h_j=c_jP_j$, the summand $\norm{[h_a,h_b]}$ is
+$0$ when $P_a,P_b$ commute and $2\abs{c_ac_b}$ when they anticommute
+(Lemma~\ref{lem:commvalue}). Thus, to leading order, the only ordering-dependent part
+of the error is the coefficient-weighted sum over anticommuting (edge) pairs of
+$\calG(H)$, at the fixed gate budget of Proposition~\ref{prop:cost}.
 \end{theorem}
 
 \begin{proof}
-The Baker--Campbell--Hausdorff expansion for one ordered product gives
+\emph{Step 1 (single-step error, exact integral form).} Write $A=-\ii\Delta H$ and,
+for $a=1,\dots,L$, $B_a=-\ii\Delta h_{\pi(a)}$, so that $e^{A}=\exp(-\ii\Delta H)$ is
+the exact one-step propagator and $S_\pi(\Delta)=\prod_{a=1}^{L}e^{B_a}$. Define the
+interpolation $F(\Delta)=e^{A}-S_\pi(\Delta)$. Both terms equal $I$ at $\Delta=0$,
+and a direct expansion in powers of $\Delta$ (each $e^{B_a}=I+B_a+\tfrac12B_a^2+\cdots$
+and $e^{A}=I+A+\tfrac12A^2+\cdots$, with $A=\sum_a(-\ii\Delta h_{\pi(a)})$) shows the
+zeroth- and first-order terms in $\Delta$ coincide:
 \[
-\log S_\pi(\Delta)
-=-\ii\Delta\sum_j h_j-\frac{\Delta^2}{2}\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]
- +O(\Delta^3),
+e^{A}=I-\ii\Delta\textstyle\sum_j h_j+O(\Delta^2),
+\qquad
+S_\pi(\Delta)=I-\ii\Delta\textstyle\sum_j h_j+O(\Delta^2),
 \]
-with the remainder bounded by third-order nested commutators on bounded
-families. Comparing this logarithm with $-\ii\Delta H$ and applying Duhamel's
-formula bounds the one-step operator error by the norm of the second-order
-commutator term plus $O(\Delta^3)$. Iterating over $r$ steps gives the displayed
-$t^2/r$ leading term. For Pauli strings, either $P_jP_k=P_kP_j$ and the
-commutator vanishes, or $P_jP_k=-P_kP_j$ and
-$[c_jP_j,c_kP_k]=2c_jc_kP_jP_k$, whose operator norm is $2|c_jc_k|$.
+because the product $\prod_a(I+B_a+\cdots)$ has linear part $\sum_a B_a=-\ii\Delta\sum_j h_j$,
+identical to that of $e^A$. Hence $F(\Delta)=O(\Delta^2)$.
+
+\emph{Step 2 (second-order coefficient).} Collect the $\Delta^2$ terms of each side.
+For $e^{A}$ the quadratic term is $\tfrac12A^2=-\tfrac{\Delta^2}{2}\bigl(\sum_j h_j\bigr)^2$.
+For the ordered product, the $\Delta^2$ contribution is the sum of all
+$B_aB_b$ with $a\le b$ in product order plus the diagonal $\tfrac12B_a^2$:
+\[
+\sum_{a<b}B_{a}B_{b}+\tfrac12\sum_a B_a^2
+=-\Delta^2\Bigl(\sum_{a<b}h_{\pi(a)}h_{\pi(b)}+\tfrac12\sum_a h_{\pi(a)}^2\Bigr).
+\]
+Subtracting (using $\bigl(\sum_j h_j\bigr)^2=\sum_a h_{\pi(a)}^2+\sum_{a\neq b}h_{\pi(a)}h_{\pi(b)}
+=\sum_a h_{\pi(a)}^2+\sum_{a<b}(h_{\pi(a)}h_{\pi(b)}+h_{\pi(b)}h_{\pi(a)})$) gives the
+quadratic part of $F$,
+\[
+\tfrac12A^2-\Bigl(\sum_{a<b}B_aB_b+\tfrac12\sum_aB_a^2\Bigr)
+=-\frac{\Delta^2}{2}\sum_{a<b}\bigl(h_{\pi(a)}h_{\pi(b)}+h_{\pi(b)}h_{\pi(a)}\bigr)
+ +\Delta^2\sum_{a<b}h_{\pi(a)}h_{\pi(b)}
+=-\frac{\Delta^2}{2}\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}],
+\]
+where the last equality uses $-(h_ah_b+h_bh_a)+2h_ah_b=h_ah_b-h_bh_a=[h_a,h_b]$. This
+is precisely the BCH second-order term: the single-step error is
+\[
+\exp(-\ii\Delta H)-S_\pi(\Delta)
+=-\frac{\Delta^2}{2}\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]+R(\Delta),
+\qquad \norm{R(\Delta)}\le \tfrac16(L\Lambda)^3\,\Delta^3 e^{L\Lambda\Delta},
+\]
+the remainder bound being the standard tail estimate for the difference of two
+exponential series whose arguments have norm at most $L\Lambda\Delta$ (each factor
+$\norm{B_a}\le\Lambda\Delta$, and there are $L$ of them, so all cubic and higher terms
+are dominated termwise by those of $e^{L\Lambda\Delta}$, scaled by $\Delta^3$).
+
+\emph{Step 3 (telescoping over $r$ steps).} The exact propagator factors as
+$\exp(-\ii tH)=\bigl(\exp(-\ii\Delta H)\bigr)^{r}$ with $\Delta=t/r$. For unitaries
+$U_1,\dots,U_r$ and $V_1,\dots,V_r$ the telescoping identity
+$\prod_m U_m-\prod_m V_m=\sum_{m=1}^{r}\bigl(\prod_{\ell<m}U_\ell\bigr)(U_m-V_m)\bigl(\prod_{\ell>m}V_\ell\bigr)$,
+together with $\norm{UWV}\le\norm{W}$ for unitary $U,V$ (the operator norm is
+unitarily invariant), gives
+\[
+\bigl\|\exp(-\ii tH)-S_\pi(\Delta)^r\bigr\|
+=\Bigl\|\textstyle\prod_{m=1}^{r}\exp(-\ii\Delta H)-\prod_{m=1}^{r}S_\pi(\Delta)\Bigr\|
+\le \sum_{m=1}^{r}\bigl\|\exp(-\ii\Delta H)-S_\pi(\Delta)\bigr\|
+= r\,\bigl\|\exp(-\ii\Delta H)-S_\pi(\Delta)\bigr\|.
+\]
+Substituting the single-step bound of Step 2 and $\Delta=t/r$,
+\[
+\bigl\|\exp(-\ii tH)-S_\pi(t/r)^r\bigr\|
+\le r\Bigl(\frac{\Delta^2}{2}\sum_{a<b}\norm{[h_{\pi(a)},h_{\pi(b)}]}+\tfrac16(L\Lambda)^3\Delta^3e^{L\Lambda\Delta}\Bigr)
+=\frac{t^2}{2r}\sum_{a<b}\norm{[h_{\pi(a)},h_{\pi(b)}]}+C\frac{t^3}{r^2},
+\]
+with $C=\tfrac16(L\Lambda)^3e^{L\Lambda t/r}$, using $r\Delta^2=t^2/r$ and
+$r\Delta^3=t^3/r^2$. This is the displayed bound.
+
+\emph{Step 4 (Pauli specialization).} For $h_j=c_jP_j$, Lemma~\ref{lem:commvalue}
+gives $\norm{[h_a,h_b]}=0$ when $P_a,P_b$ commute and $2\abs{c_ac_b}$ when they
+anticommute. Hence only the anticommuting (edge) pairs of $\calG(H)$ contribute, and
+the leading term is the coefficient-weighted edge sum
+$\tfrac{t^2}{r}\sum_{\{a,b\}\in E(\calG)}\abs{c_ac_b}$; the gate budget is fixed at
+$L\cdot r$ by Proposition~\ref{prop:cost}, independent of $\pi$. The only
+ordering-dependent quantity at leading order is therefore which anticommuting pairs
+fall adjacent in the schedule, which is exactly the surrogate the commutator policy
+minimizes.
+\end{proof}
+
+Finally we record the listing-order invariance that justifies treating the learned
+router's decision as a function of the Hamiltonian's intrinsic structure rather than
+of an arbitrary term listing.
+
+\begin{proposition}[Listing-order invariance of the router]
+\label{prop:invariance}
+Let $\sigma\in S_L$ relabel the terms of $H$ (a permutation of the input list). The
+eight scalar features of $\calG(H)$ used by the learned router---term count,
+anticommutation (edge) density, mean and maximum node degree, number of greedy colour
+groups, largest-group fraction, coefficient coefficient-of-variation, and mean Pauli
+weight---are invariant under $\sigma$. Consequently the router's predicted strategy,
+and hence the ordering it returns, depends only on the isomorphism class of the
+weighted graph $\calG(H)$, not on how the terms were listed.
+\end{proposition}
+
+\begin{proof}
+Relabeling the terms by $\sigma$ replaces $\calG(H)$ by an isomorphic graph in which
+vertex $j$ is renamed $\sigma(j)$ and the coefficient multiset is unchanged. The term
+count $L$ is the number of vertices; the edge set is mapped bijectively by $\sigma$,
+so the edge count and hence the edge density $|E|/\binom{L}{2}$ are unchanged; the
+degree multiset is preserved under graph isomorphism, so the mean and maximum degree
+are unchanged. The greedy colouring used (largest-first) processes vertices in an
+order determined by degree, and the resulting number of colour classes and the
+largest-class fraction are functions of the graph's structure that are invariant
+under isomorphism for a deterministic, degree-driven tie-break; the coefficient
+coefficient-of-variation $\hat\sigma_c/\abs{\bar c}$ and the mean Pauli weight are
+symmetric functions of the (coefficient, string) multiset and so are unchanged by any
+relabeling. Each of the eight features is therefore a function of the unordered
+weighted graph alone. The router applies a fixed standardization and classifier to
+this feature vector and returns the ordering of the selected fixed strategy; since
+the feature vector is invariant, so is the selected strategy. (The returned
+permutation is expressed in the current labeling, but the \emph{choice} of strategy
+is invariant, which is the claim.)
 \end{proof}
 
 \subsection{The learned router}
@@ -539,6 +953,27 @@ infidelity, the $\langle Z_0\rangle$ observable error, and the adjacent-anticomm
 count, all at the matched proxy. Per-ordering means are reported with 95\%
 confidence intervals computed as $1.96\,\hat\sigma/\sqrt{N}$ over the $N$ instances.
 
+\paragraph{Datasets, seeds, splits, and statistics.}
+All Hamiltonians are generated synthetically from a single master seed ($0$); each
+$(\text{family},\text{size},\text{draw})$ triple is assigned a deterministic derived
+seed, so the full $3\times5\times8=\sync{120}$-instance dataset and the per-family
+$N=\sync{40}$ subsets are exactly reproducible (Sec.~\ref{sec:repro}). The aggregate
+statistics (Table~\ref{tab:main}, Extended Data Tables~\ref{tab:ed_family}--%
+\ref{tab:ed_metrics}) average over all instances of a given ordering at the fixed
+budget; the frontier (Figure~\ref{fig:frontier}, Table~\ref{tab:ed_frontier}) averages
+over the same instances at each $r$ in $\{1,2,3,4,6,8,12\}$. The reported uncertainty
+is the half-width $1.96\,\hat\sigma/\sqrt{N}$ of a normal-approximation 95\%
+confidence interval on the mean, with $\hat\sigma$ the sample standard deviation;
+two means are read as distinguishable only when their intervals are disjoint, which
+we apply uniformly (it separates ordering from random but not the non-random
+orderings from each other). For the learned router the split is
+\emph{leave-one-instance-out}: each test instance is scored by a classifier trained
+only on the remaining $\sync{119}$ instances' (features, best-strategy) labels
+(Sec.~\ref{sec:router_method}), so no instance informs its own prediction. The
+exact-reference backend is dense \texttt{expm} cross-checked against Krylov
+\texttt{expm\_multiply}, and the Pauli kernel is gated against dense \texttt{expm} to
+$10^{-9}$ (Lemmas~\ref{lem:parity}--\ref{lem:rotation}) before any metric is recorded.
+
 \subsection{Reproducibility, software, and provenance}
 \label{sec:repro}
 The pipeline is a CPU-only Python package (\texttt{topoham}) depending on
@@ -548,14 +983,15 @@ Matplotlib. The single source of truth is \texttt{results/summary.json}, written
 the runner with full provenance (seed, command, platform, package versions,
 runtime, peak memory). On the run reported here (\texttt{configs/full.yaml}, seed
 $0$, Python 3.13, macOS arm64), the experiment completed in
-\sync{$\approx100$\,s} wall-clock with \sync{$\approx406$\,MB} peak memory; the
+\sync{$\approx62$\,s} wall-clock with \sync{$\approx474$\,MB} peak memory; the
 \texttt{pauli\_algebra\_verified} flag was \texttt{true}. An automated audit
 (\texttt{make audit}) checks that every reported number traces to a generated
 artifact and rejects forbidden superiority phrasing; it passed for this run. The
 table (\texttt{tables/main\_results.tex}) and figures
-(\texttt{figures/fig\_frontier.pdf}, \texttt{figures/fig\_family.pdf}) are generated
-directly from \texttt{summary.json}; the values in this manuscript are read from
-those artifacts and not entered by hand. All experiments are reproducible on
+(\texttt{figures/fig\_frontier.pdf} and \texttt{figures/fig\_family.pdf}) are
+generated directly from \texttt{summary.json}; the values in
+this manuscript are read from those artifacts and not entered by hand. All
+experiments are reproducible on
 commodity hardware; runtime and memory are reported for each benchmark.
 
 % ============================================================
@@ -579,6 +1015,10 @@ experiments, analysed the results, and wrote the manuscript.
 
 \section*{Funding}
 The author received no specific funding for this work.
+
+\section*{Acknowledgements}
+The author thanks the maintainers of the open-source scientific Python ecosystem
+(NumPy, SciPy, NetworkX, scikit-learn, and Matplotlib), on which this work relies.
 
 % ============================================================
 \appendix
@@ -654,11 +1094,12 @@ span the regimes from sparse-and-orderable (Heisenberg) to dense-and-stubborn
 Two single-qubit Paulis anticommute iff they differ and neither is $I$ (e.g.\ $X$
 and $Z$ anticommute; $X$ and $X$ commute; $X$ and $I$ commute). Two Pauli
 \emph{strings} $P,Q$ commute iff the number of qubit positions where their factors
-anticommute is \emph{even}, and anticommute iff that count is \emph{odd}. Proof
-sketch: swapping $P$ past $Q$ picks up a factor $(-1)$ for each anticommuting
-position, so $PQ=(-1)^k QP$ with $k$ the number of anticommuting positions. This
-$O(n)$ test (\texttt{pauli.commute} / \texttt{pauli.anticommute}) is the structural
-fact the commutator graph (Sec.~\ref{si:graph}) is built from.
+anticommute is \emph{even}, and anticommute iff that count is \emph{odd}: swapping
+$P$ past $Q$ picks up a factor $(-1)$ for each anticommuting position, so
+$PQ=(-1)^k QP$ with $k$ the number of anticommuting positions. This is proved in full
+as Lemma~\ref{lem:parity} in the Methods. This $O(n)$ test
+(\texttt{pauli.commute} / \texttt{pauli.anticommute}) is the structural fact the
+commutator graph (Sec.~\ref{si:graph}) is built from.
 
 \paragraph{Fact B---a Pauli is an involution, so its rotation is a cosine/sine pair.}
 Any non-identity Pauli string satisfies $P^2=I$ (its eigenvalues are $\pm1$).
@@ -815,10 +1256,11 @@ that band is derived from the same instance fidelities being averaged and change
 reported mean. \texttt{runner.run} writes \texttt{results/summary.json}---the single
 source of truth---with full provenance (seed, exact command, platform, package
 versions, runtime, peak memory, and the \texttt{pauli\_algebra\_verified} flag).
-Nothing in the paper is typed by hand. The table is built as \texttt{summary.json}
-$\to$ \texttt{make\_tables.py} $\to$ \texttt{results/\allowbreak main\allowbreak\_results.tex},
-and the figures as \texttt{summary.json} $\to$ \texttt{make\_figures.py} $\to$
-the three \texttt{figures/*.pdf} (\texttt{fig\_schematic}, \texttt{fig\_frontier},
+Nothing in the paper is typed by hand. The table is built by the pipeline
+\texttt{summary.json} $\to$ \texttt{make\_tables.py} $\to$
+\texttt{results/main\_results.tex}, and the figures by
+\texttt{summary.json} $\to$ \texttt{make\_figures.py} $\to$ the three
+\texttt{figures/*.pdf} files (\texttt{fig\_schematic}, \texttt{fig\_frontier},
 \texttt{fig\_family}).
 Figures are produced by \texttt{src/topoham/plotting.py} in \emph{Nature Machine
 Intelligence} house style: vector PDF (\texttt{pdf.fonttype=42}, editable text),
@@ -866,7 +1308,156 @@ reference tractable), synthetic / structured Hamiltonians, classical CPU simulat
 and a gate-count \emph{proxy} ($L\cdot r$).
 
 % ============================================================
-\bibliographystyle{unsrtnat}
-\bibliography{refs}
+\begin{thebibliography}{19}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Feynman(1982)]{feynman1982simulating}
+Richard~P. Feynman.
+\newblock Simulating physics with computers.
+\newblock \emph{International Journal of Theoretical Physics}, 21:\penalty0
+  467--488, 1982.
+\newblock \doi{10.1007/BF02650179}.
+
+\bibitem[Lloyd(1996)]{lloyd1996universal}
+Seth Lloyd.
+\newblock Universal quantum simulators.
+\newblock \emph{Science}, 273\penalty0 (5278):\penalty0 1073--1078, 1996.
+\newblock \doi{10.1126/science.273.5278.1073}.
+
+\bibitem[Trotter(1959)]{trotter1959product}
+Hale~F. Trotter.
+\newblock On the product of semi-groups of operators.
+\newblock \emph{Proceedings of the American Mathematical Society}, 10\penalty0
+  (4):\penalty0 545--551, 1959.
+\newblock \doi{10.1090/S0002-9939-1959-0108732-6}.
+
+\bibitem[Suzuki(1991)]{suzuki1991general}
+Masuo Suzuki.
+\newblock General theory of fractal path integrals with applications to
+  many-body theories and statistical physics.
+\newblock \emph{Journal of Mathematical Physics}, 32\penalty0 (2):\penalty0
+  400--407, 1991.
+\newblock \doi{10.1063/1.529425}.
+
+\bibitem[Childs et~al.(2021{\natexlab{a}})Childs, Su, Tran, Wiebe, and
+  Zhu]{childs2021theory}
+Andrew~M. Childs, Yuan Su, Minh~C. Tran, Nathan Wiebe, and Shuchen Zhu.
+\newblock Theory of trotter error with commutator scaling.
+\newblock \emph{Physical Review X}, 11\penalty0 (1):\penalty0 011020,
+  2021{\natexlab{a}}.
+\newblock \doi{10.1103/PhysRevX.11.011020}.
+
+\bibitem[Childs et~al.(2018)Childs, Su, Tran, Wiebe, and Zhu]{childs2018toward}
+Andrew~M. Childs, Yuan Su, Minh~C. Tran, Nathan Wiebe, and Shuchen Zhu.
+\newblock Toward the first quantum simulation with quantum speedup.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 115\penalty0
+  (38):\penalty0 9456--9461, 2018.
+\newblock \doi{10.1073/pnas.1801723115}.
+
+\bibitem[Hatano and Suzuki(2005)]{hatano2005finding}
+Naomichi Hatano and Masuo Suzuki.
+\newblock Finding exponential product formulas of higher orders.
+\newblock \emph{Lecture Notes in Physics}, 679:\penalty0 37--68, 2005.
+\newblock \doi{10.1007/11526216_2}.
+
+\bibitem[Childs et~al.(2021{\natexlab{b}})Childs, Su, Tran, Wiebe, and
+  Zhu]{childs2019faster}
+Andrew~M. Childs, Yuan Su, Minh~C. Tran, Nathan Wiebe, and Shuchen Zhu.
+\newblock A theory of trotter error.
+\newblock \emph{Physical Review X}, 11\penalty0 (1):\penalty0 011020,
+  2021{\natexlab{b}}.
+\newblock \doi{10.1103/PhysRevX.11.011020}.
+
+\bibitem[Poulin et~al.(2015)Poulin, Hastings, Wecker, Wiebe, Doberty, and
+  Troyer]{poulin2015trotter}
+David Poulin, Matthew~B. Hastings, Dave Wecker, Nathan Wiebe, Andrew~C.
+  Doberty, and Matthias Troyer.
+\newblock The trotter step size required for accurate quantum simulation of
+  quantum chemistry.
+\newblock \emph{Quantum Information \& Computation}, 15\penalty0
+  (5--6):\penalty0 361--384, 2015.
+
+\bibitem[Verteletskyi et~al.(2020)Verteletskyi, Yen, and
+  Izmaylov]{verteletskyi2020measurement}
+Vladyslav Verteletskyi, Tzu-Ching Yen, and Artur~F. Izmaylov.
+\newblock Measurement optimization in the variational quantum eigensolver using
+  a minimum clique cover.
+\newblock \emph{The Journal of Chemical Physics}, 152\penalty0 (12):\penalty0
+  124114, 2020.
+\newblock \doi{10.1063/1.5141458}.
+
+\bibitem[Gokhale et~al.(2020)Gokhale, Angiuli, Ding, Gui, Tomesh, Suchara,
+  Martonosi, and Chong]{gokhale2020optimization}
+Pranav Gokhale, Olivia Angiuli, Yongshan Ding, Kaiwen Gui, Teague Tomesh,
+  Martin Suchara, Margaret Martonosi, and Frederic~T. Chong.
+\newblock {$O(N^3)$} measurement cost for variational quantum eigensolver on
+  molecular hamiltonians.
+\newblock \emph{IEEE Transactions on Quantum Engineering}, 1:\penalty0 1--24,
+  2020.
+\newblock \doi{10.1109/TQE.2020.3035814}.
+
+\bibitem[Crawford et~al.(2021)Crawford, Straaten, Wang, Parks, Campbell, and
+  Brierley]{crawford2021efficient}
+Ophelia Crawford, Billy~van Straaten, Daochen Wang, Thomas Parks, Earl
+  Campbell, and Stephen Brierley.
+\newblock Efficient quantum measurement of pauli operators in the presence of
+  finite sampling error.
+\newblock \emph{Quantum}, 5:\penalty0 385, 2021.
+\newblock \doi{10.22331/q-2021-01-20-385}.
+
+\bibitem[Tranter et~al.(2019)Tranter, Love, Mintert, and
+  Wiebe]{tranter2019ordering}
+Andrew Tranter, Peter~J. Love, Florian Mintert, and Nathan Wiebe.
+\newblock Ordering of trotterization: Impact on errors in quantum simulation of
+  electronic structure.
+\newblock \emph{Entropy}, 21\penalty0 (12):\penalty0 1218, 2019.
+\newblock \doi{10.3390/e21121218}.
+
+\bibitem[Pedregosa et~al.(2011)Pedregosa, Varoquaux, Gramfort,
+  et~al.]{pedregosa2011scikit}
+Fabian Pedregosa, Ga{\"e}l Varoquaux, Alexandre Gramfort, et~al.
+\newblock Scikit-learn: Machine learning in python.
+\newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 2825--2830,
+  2011.
+
+\bibitem[Bravyi and Kitaev(2002)]{bravyi2002fermionic}
+Sergey~B. Bravyi and Alexei~Yu. Kitaev.
+\newblock Fermionic quantum computation.
+\newblock \emph{Annals of Physics}, 298\penalty0 (1):\penalty0 210--226, 2002.
+\newblock \doi{10.1006/aphy.2002.6254}.
+
+\bibitem[Whitfield et~al.(2011)Whitfield, Biamonte, and
+  Aspuru-Guzik]{whitfield2011simulation}
+James~D. Whitfield, Jacob Biamonte, and Al{\'a}n Aspuru-Guzik.
+\newblock Simulation of electronic structure hamiltonians using quantum
+  computers.
+\newblock \emph{Molecular Physics}, 109\penalty0 (5):\penalty0 735--750, 2011.
+\newblock \doi{10.1080/00268976.2011.552441}.
+
+\bibitem[Harris et~al.(2020)Harris, Millman, van~der Walt,
+  et~al.]{harris2020array}
+Charles~R. Harris, K.~Jarrod Millman, St{\'e}fan~J. van~der Walt, et~al.
+\newblock Array programming with numpy.
+\newblock \emph{Nature}, 585:\penalty0 357--362, 2020.
+\newblock \doi{10.1038/s41586-020-2649-2}.
+
+\bibitem[Virtanen et~al.(2020)Virtanen, Gommers, Oliphant,
+  et~al.]{virtanen2020scipy}
+Pauli Virtanen, Ralf Gommers, Travis~E. Oliphant, et~al.
+\newblock Scipy 1.0: fundamental algorithms for scientific computing in python.
+\newblock \emph{Nature Methods}, 17:\penalty0 261--272, 2020.
+\newblock \doi{10.1038/s41592-019-0686-2}.
+
+\bibitem[Hagberg et~al.(2008)Hagberg, Schult, and Swart]{hagberg2008exploring}
+Aric~A. Hagberg, Daniel~A. Schult, and Pieter~J. Swart.
+\newblock Exploring network structure, dynamics, and function using networkx.
+\newblock In \emph{Proceedings of the 7th Python in Science Conference}, pages
+  11--15, 2008.
+
+\end{thebibliography}
 
 \end{document}

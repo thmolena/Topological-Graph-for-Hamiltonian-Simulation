@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "topoham"
 version = "0.1.0"
 description = "Lie-Topological Graph Policies for Biomolecular Hamiltonian Simulation"
-readme = "README.md"
+readme = { text = "Commutator-graph term ordering for first-order Trotter Hamiltonian simulation.", content-type = "text/plain" }
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Molena Huynh" }]
