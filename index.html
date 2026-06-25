@@ -208,7 +208,7 @@
     </div>
     <div class="card">
       <h3>Versus Trotter-error theory</h3>
-      <p>The commutator scaling of Trotter error is by now sharply characterized (Childs et al. 2021; 2018). This work connects that bound to an <strong>ordering-only surrogate</strong> &mdash; the count of adjacent anticommuting pairs &mdash; that is at once directly minimizable and directly measurable, while keeping the within-noise caveat among non-random heuristics in plain view.</p>
+      <p>The commutator scaling of Trotter error is by now sharply characterized (Childs et al. 2021; 2018). This work connects that bound to an <strong>ordering-only surrogate</strong> &mdash; the count of adjacent anticommuting pairs &mdash; that is at once directly minimizable and directly measurable, while keeping the within-noise caveat among non-random heuristics explicit.</p>
     </div>
   </div>
 </section>
@@ -256,7 +256,7 @@
 
 <section id="results">
   <h2>Empirical Validation</h2>
-  <p class="lead">Means and 95% confidence intervals for every headline quantity, transcribed verbatim from <code>results/summary.json</code>.</p>
+  <p class="lead">Means and 95% confidence intervals for every main quantity, transcribed verbatim from <code>results/summary.json</code>.</p>
 
   <h3 style="margin:0 0 8px">First-order Trotter fidelity by ordering at a matched gate budget</h3>
   <p class="note" style="margin:0 0 12px">120 instances, evolution time $t=2.0$, $r=3$ steps, mean gate proxy $=48$. &ldquo;adj. anticomm.&rdquo; is the mean number of adjacent anticommuting pairs in the schedule; &ldquo;gate proxy&rdquo; is $L\!\cdot\!r$, invariant under reordering.</p>
@@ -356,7 +356,7 @@
 <section id="repro">
   <h2>Reproducibility</h2>
   <p class="lead">A pip-installable artifact and an audited path from a clean checkout to the identical numbers.</p>
-  <p>The package <code>topoham</code> (CPU-only; numpy / scipy / networkx / scikit-learn / matplotlib) lives at <code>submission/code</code> behind a single end-to-end entry point. Every reported number flows from one source of truth, <code>results/summary.json</code>, and is transcribed verbatim. Two guards enforce that discipline: an audit gate (<code>make audit</code>) fails the build on any number that does not trace to a generated artifact, and the Pauli-rotation kernel is cross-checked against dense <code>scipy.linalg.expm</code> to $10^{-9}$ before any fidelity is emitted.</p>
+  <p>The package <code>topoham</code> (CPU-only; numpy / scipy / networkx / scikit-learn / matplotlib) lives at <code>submission/code</code> behind a single end-to-end entry point. Every reported number flows from one authoritative artifact, <code>results/summary.json</code>, and is transcribed verbatim. Two guards enforce that discipline: an audit gate (<code>make audit</code>) fails the build on any number that does not trace to a generated artifact, and the Pauli-rotation kernel is cross-checked against dense <code>scipy.linalg.expm</code> to $10^{-9}$ before any fidelity is emitted.</p>
   <pre><span class="c"># From the repository root</span>
 cd submission/code
 make install         <span class="c"># numpy / scipy / networkx / scikit-learn / matplotlib (CPU-only)</span>

@@ -81,7 +81,7 @@ entry.
 4. **Audited reward** — fidelity of the Trotter state against the exact `e^{-iHt}`
    reference (`scipy.linalg.expm`, cross-checked against Krylov `expm_multiply`).
 
-## Headline results
+## Main results
 
 Reported scale: 120 structured instances (transverse-field Ising, Heisenberg, and random
 molecular-like families; `n ∈ {4,…,8}` qubits; eight seeded draws each), evolution time
@@ -145,7 +145,7 @@ matplotlib, and pyyaml. Optional accelerated backends are declared under the `gp
 
 ## Reproduction
 
-A single command regenerates every figure, table, and headline number from one seeded run.
+A single command regenerates every figure, table, and main number from one seeded run.
 Invoke it from the repository's `code/` directory:
 
 ```bash
@@ -185,7 +185,7 @@ make audit           # readiness gate: traceable numbers, vetted claims
     ├── scripts/                Command-line entry points around the library
     ├── configs/                smoke.yaml (demo scale) · full.yaml (reported scale)
     ├── tests/                  Correctness, convergence, and core-claim tests
-    ├── results/                Generated artifacts — summary.json is the single source of truth
+    ├── results/                Generated artifacts — summary.json is the authoritative artifact
     └── figures/                Generated PDFs (frontier + per-family)
 ```
 
