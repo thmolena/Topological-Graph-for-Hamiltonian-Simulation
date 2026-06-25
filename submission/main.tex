@@ -52,7 +52,8 @@
 Trotter Error at a Fixed Gate Budget}
 
 \author{Molena Huynh\\[3pt]
-\normalsize [Affiliation to be completed before submission]}
+\normalsize North Carolina State University\\
+\normalsize \texttt{molena.huynh@jmp.com}}
 
 \date{\today}
 
@@ -115,6 +116,19 @@ The modern, tight analysis of this error---``Theory of Trotter Error with Commut
 Scaling''---makes the dependence on nested commutators
 explicit and is the theoretical anchor of this
 work~\cite{childs2021theory,childs2018toward}.
+
+This paper also sits in an ordered sequence of resource-accounted graph and
+quantum-learning studies.  The query-budget discipline follows
+graph-conditioned trust-region QAOA~\cite{uqqaoa}, while the
+controlled relabeling-invariant benchmark style follows the depth-one
+topology-conditioned QAOA study~\cite{topoqaoa}, and complementary learned residual Trotter corrections~\cite{liergtc}.  More directly, the
+Hamiltonian-simulation setting is informed by recent fixed-depth and
+representation-theoretic analyses by Nguyen and Jing: second-order Zassenhaus
+factorization isolates non-commutative corrections, and root-activity
+complexity bounds make Lie-algebraic structure
+quantitative~\cite{nguyen2025zassenhaus,jing2026complexity}.  The present contribution is
+different and narrower: it changes only the ordering of first-order product
+formula terms at matched gate count.
 
 Two facts about Eq.~\eqref{eq:trotter} motivate this paper. First, the
 \emph{implementation cost} of a first-order schedule is one rotation $e^{-\ii c_j
@@ -579,7 +593,24 @@ jointly, connecting ordering to the classic commuting-group Trotter optimization
     \item \textbf{Within-noise differences among non-random orderings.} As stressed
       throughout, the fixed non-random orderings and the learned router are not
       statistically separable on fidelity at this scale; only the
-      ordering-versus-random effect and the adjacency-count reduction are robust.
+      ordering-versus-random effect and the adjacency-count reduction are robust. In
+      particular, the headline \sync{$1.76\times$} mean-infidelity reduction is
+      measured \emph{against the random-ordering baseline only}; against the
+      coefficient-magnitude heuristic the commutator ordering is statistically tied
+      (and on the molecular-like family marginally behind, Table~\ref{tab:ed_family}),
+      so the random comparison should be read as a strawman that isolates the ordering
+      lever rather than as evidence of superiority over a strong baseline.
+    \item \textbf{Pseudo-replication in the deterministic families.} The
+      transverse-field Ising and Heisenberg builders are fixed-coefficient and do not
+      consume the per-draw random seed, so the eight ``seeded draws'' at each (family,
+      size) cell are byte-identical for these two families; only the molecular-like
+      family varies across draws. The reported $N=120$ therefore contains $70$
+      duplicate instances, and the transverse-field Ising and Heisenberg confidence
+      intervals reflect variation across the five \emph{sizes} rather than eight
+      independent random draws. This narrows those intervals relative to a genuinely
+      randomized design; the molecular-like results, where the headline effect is
+      already within noise, are unaffected. A corrected design would randomize
+      couplings/fields per draw before any per-family claim is sharpened.
     \item \textbf{Classical simulation; solo author.} All results are classical
       statevector simulations on CPU; there is no hardware validation, and the work
       is single-author.
@@ -1457,6 +1488,37 @@ Aric~A. Hagberg, Daniel~A. Schult, and Pieter~J. Swart.
 \newblock Exploring network structure, dynamics, and function using networkx.
 \newblock In \emph{Proceedings of the 7th Python in Science Conference}, pages
   11--15, 2008.
+
+\bibitem[Huynh(2026{\natexlab{a}})]{uqqaoa}
+Molena Huynh.
+\newblock Query-efficient quantum approximate optimization via
+  graph-conditioned trust regions.
+\newblock \emph{arXiv preprint arXiv:2604.24803}, 2026.
+\newblock \doi{10.48550/arXiv.2604.24803}.
+
+\bibitem[Huynh(2026{\natexlab{c}})]{liergtc}
+Molena Huynh.
+\newblock Provable operator learning of size-transferable {Trotter} corrections for {Hamiltonian} simulation.
+\newblock Manuscript in preparation, 2026.
+
+\bibitem[Huynh(2026{\natexlab{b}})]{topoqaoa}
+Molena Huynh.
+\newblock Topology-conditioned warm starts match spectral initialization for
+  depth-one {QAOA}.
+\newblock Manuscript in preparation, 2026.
+
+\bibitem[Nguyen and Jing(2025)]{nguyen2025zassenhaus}
+Molena Nguyen and Naihuan Jing.
+\newblock Zassenhaus expansion in solving the {Schr\"odinger} equation.
+\newblock \emph{arXiv preprint arXiv:2505.09441}, 2025.
+\newblock \doi{10.48550/arXiv.2505.09441}.
+
+\bibitem[Jing and Nguyen(2026)]{jing2026complexity}
+Naihuan Jing and Molena Nguyen.
+\newblock Complexity bounds for Hamiltonian simulation in unitary
+  representations.
+\newblock \emph{arXiv preprint arXiv:2603.07231}, 2026.
+\newblock \doi{10.48550/arXiv.2603.07231}.
 
 \end{thebibliography}
 

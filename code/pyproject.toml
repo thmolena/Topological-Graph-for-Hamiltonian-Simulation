@@ -5,19 +5,51 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "topoham"
 version = "0.1.0"
-description = "Lie-Topological Graph Policies for Biomolecular Hamiltonian Simulation"
+description = "Commutator-graph term ordering that reduces first-order Trotterization error at a fixed gate budget for Hamiltonian simulation."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "Molena Huynh" }]
+authors = [{ name = "Molena Huynh", email = "molena.huynh@jmp.com" }]
+keywords = [
+  "hamiltonian-simulation",
+  "trotterization",
+  "product-formula",
+  "commutator-graph",
+  "term-ordering",
+  "quantum-simulation",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Physics",
+  "Operating System :: OS Independent",
+]
 dependencies = [
-  "numpy>=1.24", "scipy>=1.10", "networkx>=3.0",
-  "scikit-learn>=1.2", "matplotlib>=3.6", "pyyaml>=6.0",
+  "numpy>=1.24,<3",
+  "scipy>=1.10",
+  "networkx>=3.0",
+  "scikit-learn>=1.2",
+  "matplotlib>=3.6",
+  "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
 gpu = ["torch>=2.0"]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "build>=1.0"]
+
+[project.urls]
+Homepage = "https://github.com/thmolena/P3-Lie-Topological-Graph-Policies-for-Hamiltonian-Simulation"
+Repository = "https://github.com/thmolena/P3-Lie-Topological-Graph-Policies-for-Hamiltonian-Simulation"
+
+[project.scripts]
+topoham-reproduce = "topoham.reproduce:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

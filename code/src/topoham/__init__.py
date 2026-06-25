@@ -20,6 +20,7 @@ from . import (  # noqa: F401
     pauli,
     plotting,
     policies,
+    reproduce,
     runner,
     seed,
 )
