@@ -42,6 +42,16 @@ _PAIR_ANTICOMMUTE = {
     (a, b): (a != "I" and b != "I" and a != b) for a in "IXYZ" for b in "IXYZ"
 }
 
+# Single-qubit Pauli product table: p*q = phase * r, with phase in {1,-1,i,-i}.
+# (e.g. X*Y = i Z, Y*X = -i Z); used to form the commutator error operator
+# matrix-free (commutator_graph / error_form).
+_SINGLE_PRODUCT = {
+    ("I", "I"): ("I", 1), ("I", "X"): ("X", 1), ("I", "Y"): ("Y", 1), ("I", "Z"): ("Z", 1),
+    ("X", "I"): ("X", 1), ("X", "X"): ("I", 1), ("X", "Y"): ("Z", 1j), ("X", "Z"): ("Y", -1j),
+    ("Y", "I"): ("Y", 1), ("Y", "X"): ("Z", -1j), ("Y", "Y"): ("I", 1), ("Y", "Z"): ("X", 1j),
+    ("Z", "I"): ("Z", 1), ("Z", "X"): ("Y", 1j), ("Z", "Y"): ("X", -1j), ("Z", "Z"): ("I", 1),
+}
+
 
 def num_qubits(pauli: str) -> int:
     return len(pauli)
@@ -75,6 +85,28 @@ def commute(p: str, q: str) -> bool:
 def anticommute(p: str, q: str) -> bool:
     """True iff ``p`` and ``q`` do NOT commute (an edge in the commutator graph)."""
     return not commute(p, q)
+
+
+def pauli_product(p: str, q: str) -> Tuple[str, complex]:
+    r"""Product of two Pauli strings as a phased Pauli: :math:`PQ = \omega\,R`.
+
+    Returns ``(R, omega)`` where ``R`` is a Pauli string and ``omega`` a unit-
+    modulus phase in :math:`\{1,-1,i,-i\}`. Each qubit contributes one entry of
+    the single-qubit product table; phases multiply. Runs in :math:`O(n)` with no
+    matrices. This is the algebraic kernel behind the *commutator error form*:
+    for an anticommuting pair :math:`P_j,P_k` the commutator is
+    :math:`[c_jP_j,c_kP_k]=2c_jc_k\,P_jP_k`, a phased Pauli, so the leading
+    Trotter error operator is a sum of phased Paulis assembled with this routine.
+    """
+    if len(p) != len(q):
+        raise ValueError(f"length mismatch: {p!r} vs {q!r}")
+    phase: complex = 1 + 0j
+    out = []
+    for a, b in zip(p, q):
+        r, ph = _SINGLE_PRODUCT[(a, b)]
+        out.append(r)
+        phase *= ph
+    return "".join(out), phase
 
 
 @lru_cache(maxsize=4096)

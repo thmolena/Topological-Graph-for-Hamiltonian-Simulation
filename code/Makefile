@@ -6,7 +6,7 @@ PY ?= python
 .PHONY: install test demo full-run tables figures audit clean
 
 install:
-	@echo "No package install required; run test/reproduce targets from this source tree."
+	$(PY) -m pip install .
 
 test:
 	$(PY) -m pytest -q

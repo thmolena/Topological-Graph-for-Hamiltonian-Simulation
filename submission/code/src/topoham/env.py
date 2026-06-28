@@ -149,3 +149,24 @@ class TrotterEnv:
             "observable_error": metrics.observable_error(self.reference, psi),
             "gate_proxy": self.gate_proxy,
         }
+
+    def evaluate_schedule(self, name: str, r: int,
+                          rng: "np.random.Generator | None" = None) -> dict:
+        """Run a named *schedule* at step count ``r`` and score it.
+
+        Schedules generalise orderings: the per-step ordering may alternate
+        direction (``antithetic``) or fold symmetrically (``symmetric``). The
+        cost reported is the realised rotation count ``gates`` (the matched-cost
+        x-axis), not a proxy. Uses the cached exact reference.
+        """
+        from . import schedules
+        if rng is None:
+            rng = np.random.default_rng(0)
+        flat, _ = schedules.build_flat(name, self.ham, r, rng)
+        psi, gates = schedules.apply_flat(self.ham, self.t, r, flat, self.psi0)
+        return {
+            "fidelity": metrics.fidelity(self.reference, psi),
+            "infidelity": metrics.infidelity(self.reference, psi),
+            "observable_error": metrics.observable_error(self.reference, psi),
+            "gates": int(gates),
+        }

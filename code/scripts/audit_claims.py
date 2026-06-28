@@ -33,14 +33,18 @@ def main() -> int:
         problems += audit.audit_forbidden_claims(text)
 
     # Every headline macro must be present (traceable to this run).
-    for key in ("commutator_fidelity_mean", "random_fidelity_mean",
-                "infidelity_reduction_vs_random", "n_instances"):
+    for key in ("n_instances", "gates_to_target_first_order",
+                "gates_to_target_antithetic", "gate_speedup_vs_first_order",
+                "slope_first_order", "slope_antithetic", "ordering_impotence_ratio"):
         if key not in headline:
             problems.append(f"headline macro {key!r} not generated")
 
-    # Integrity flag: the fast Pauli kernel must have matched dense expm.
+    # Integrity flags: the fast Pauli kernel must match dense expm, and the
+    # matrix-free commutator error form must match the dense pair-commutator sum.
     if not summary.get("pauli_algebra_verified", False):
         problems.append("pauli algebra verification flag is not set")
+    if not summary.get("error_form_verified", False):
+        problems.append("commutator error-form verification flag is not set")
 
     if problems:
         print("AUDIT FAILED:")

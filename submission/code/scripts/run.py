@@ -18,10 +18,17 @@ def main() -> None:
     cfg = Config.load(args.config)
     summary = run(cfg, Path(args.out))
     h = summary["headline"]
-    print(f"[{cfg.name}] instances={h['n_instances']}  gate-proxy={h['gate_proxy']}  "
-          f"commutator fidelity={h['commutator_fidelity_mean']:.4f}  "
-          f"random fidelity={h['random_fidelity_mean']:.4f}  "
-          f"infidelity reduction vs random={h['infidelity_reduction_vs_random']}x  "
+    print(f"[{cfg.name}] instances={h['n_instances']}  target={h['target']}  "
+          f"gates-to-target: first-order={h['gates_to_target_first_order']} "
+          f"antithetic={h['gates_to_target_antithetic']} "
+          f"symmetric={h['gates_to_target_symmetric']}  "
+          f"(speedup {h['gate_speedup_vs_first_order']}x)  "
+          f"learned/oracle mean gates (common)={h['learned_mean_gates_common']}/"
+          f"{h['oracle_mean_gates_common']} vs symmetric "
+          f"{h['symmetric_mean_gates_common']}  "
+          f"slopes: 1st={h['slope_first_order']} anti={h['slope_antithetic']} "
+          f"sym={h['slope_symmetric']}  "
+          f"impotence-ratio={h['ordering_impotence_ratio']}  "
           f"runtime={summary['provenance']['runtime_sec']}s")
 
 

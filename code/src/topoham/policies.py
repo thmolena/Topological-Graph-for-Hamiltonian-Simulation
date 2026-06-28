@@ -138,40 +138,54 @@ def get_ordering(strategy: str, ham: Hamiltonian,
 
 
 # ---------------------------------------------------------------------------
-# Learned policy: features -> best fixed strategy
+# Learned schedule router: graph features -> best fixed *schedule*
 # ---------------------------------------------------------------------------
+# Ten listing-order-invariant features of the commutator graph. The first eight
+# are the original graph invariants; the last two summarise the commutator
+# *error form* (how much of the leading error is sign-/ordering-reducible), which
+# is what discriminates when a folded schedule pays off.
 FEATURE_KEYS = (
     "n_terms", "anticommutation_density", "mean_degree", "max_degree",
     "n_color_groups", "largest_group_frac", "coeff_cv", "mean_weight",
+    "colliding_frac", "irreducible_frac",
 )
 
 
 def feature_vector(ham: Hamiltonian) -> np.ndarray:
+    """Concatenate the graph invariants with two commutator-error-form features.
+
+    All ten are functions of the unordered weighted graph (listing-order
+    invariant), so the router's decision does not depend on how terms are listed.
+    """
+    from . import error_form
     feats = cg.features(ham)
+    cs = error_form.collision_stats(ham)
+    n_edges = max(cs["n_anti_pairs"], 1.0)
+    feats["colliding_frac"] = round(cs["colliding_pairs"] / n_edges, 6)
+    feats["irreducible_frac"] = cs["irreducible_frac"]
     return np.array([feats[k] for k in FEATURE_KEYS], dtype=float)
 
 
-class LearnedOrderingPolicy:
-    """Predicts the best fixed strategy from commutator-graph features.
+class LearnedSchedulePolicy:
+    """Predicts the gate-optimal *schedule* from commutator-graph features.
 
-    Trained on (features, best-strategy) pairs where the label is whichever fixed
-    strategy attained the highest measured fidelity on a training Hamiltonian.
-    At inference it returns the predicted strategy's ordering -- a learned router
-    over the interpretable policies, not a black box over the term sequence.
-    Falls back to the ``commutator`` strategy when unfitted or single-class.
+    Trained on (features, best-schedule) pairs where the label is whichever fixed
+    schedule reached the target accuracy at the fewest rotations on a training
+    Hamiltonian. At inference it returns the predicted schedule *name* -- a
+    learned router over the interpretable schedules, not a black box. Falls back
+    to ``symmetric`` when unfitted or single-class.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, fallback: str = "symmetric") -> None:
         self._clf = None
-        self._fallback = "commutator"
+        self._fallback = fallback
 
     def fit(self, hams: Sequence[Hamiltonian], best_labels: Sequence[str]
-            ) -> "LearnedOrderingPolicy":
+            ) -> "LearnedSchedulePolicy":
         X = np.array([feature_vector(h) for h in hams], dtype=float)
         y = np.asarray(best_labels)
         if len(set(y.tolist())) < 2:
-            # Degenerate target: route everything to the dominant strategy.
-            self._fallback = y[0] if len(y) else "commutator"
+            self._fallback = y[0] if len(y) else self._fallback
             self._clf = None
             return self
         from sklearn.pipeline import make_pipeline
@@ -184,14 +198,28 @@ class LearnedOrderingPolicy:
         ).fit(X, y)
         return self
 
-    def predict_strategy(self, ham: Hamiltonian) -> str:
+    def predict_schedule(self, ham: Hamiltonian) -> str:
         if self._clf is None:
             return self._fallback
         x = feature_vector(ham).reshape(1, -1)
         return str(self._clf.predict(x)[0])
 
+
+# Backward-compatible alias: the router over fixed *orderings* (selects an
+# ordering name and returns that ordering). Retained for the ordering-impotence
+# comparison and the legacy ordering tests.
+class LearnedOrderingPolicy(LearnedSchedulePolicy):
+    def __init__(self) -> None:
+        super().__init__(fallback="commutator")
+
+    def predict_strategy(self, ham: Hamiltonian) -> str:
+        return self.predict_schedule(ham)
+
     def ordering(self, ham: Hamiltonian, rng: np.random.Generator) -> Ordering:
-        return get_ordering(self.predict_strategy(ham), ham, rng)
+        name = self.predict_schedule(ham)
+        if name not in FIXED_STRATEGIES:
+            name = "commutator"
+        return get_ordering(name, ham, rng)
 
 
 # All comparable orderings (references are handled separately in the runner).

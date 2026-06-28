@@ -15,11 +15,13 @@ from . import (  # noqa: F401
     commutator_graph,
     config,
     env,
+    error_form,
     hamiltonians,
     metrics,
     pauli,
     plotting,
     policies,
     runner,
+    schedules,
     seed,
 )

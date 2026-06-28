@@ -11,31 +11,32 @@ FOUNDATION_SECTIONS: tuple[tuple[str, str], ...] = (
         "as the scalable proposal.",
     ),
     (
-        "Pauli algebra",
-        "pauli.py implements tensor-product Pauli strings and commutators.  Two "
-        "terms that commute can be swapped without first-order commutator error; "
-        "non-commuting neighbours define the graph structure used by the "
-        "ordering policies.",
+        "Pauli algebra and the error form",
+        "pauli.py implements Pauli strings, the O(n) commutation test, the exact "
+        "single-Pauli rotation, and the phased product P Q = omega R.  error_form.py "
+        "assembles the exact leading-order error operator E_pi as a signed sum of "
+        "Pauli strings and validates it against the dense pair-commutator sum to 1e-9.",
     ),
     (
-        "Commutator graph",
-        "commutator_graph.py builds a graph whose vertices are Hamiltonian terms "
-        "and whose edges mark non-zero commutators.  Ordering terms is then a "
-        "graph problem: reduce adjacent conflicts at matched gate budget.",
+        "Ordering impotence",
+        "Reordering only re-signs the commutators in E_pi, so its Hilbert-Schmidt "
+        "norm is exactly invariant when the edge commutators are distinct.  No fixed "
+        "ordering escapes the O(t^2/r) first-order rate -- the precise form of the "
+        "'ordering is within noise' observation.",
     ),
     (
-        "Policies and baselines",
-        "policies.py compares random ordering, graph heuristics and learned or "
-        "topology-aware choices.  The manuscript reports the clear effect of "
-        "structured ordering versus random, while avoiding unsupported claims "
-        "that the non-random orderings are separated at this scale.",
+        "Schedules and baselines",
+        "schedules.py implements first-order, antithetic (a free second-order fold "
+        "that cancels E_pi at the identical L*r rotation count) and symmetric folds. "
+        "policies.py adds a learned router over ten commutator-graph features that "
+        "selects the gate-optimal schedule per instance.",
     ),
     (
         "Metrics",
-        "metrics.py computes fidelity, error and confidence intervals across a "
-        "seeded instance family.  Figures show frontier curves and family-level "
-        "breakdowns because those display types are standard and interpretable "
-        "for NMI-style benchmark papers.",
+        "metrics.py and runner.py compute fidelity, the rotations to reach a target "
+        "fidelity (the matched-cost efficiency metric), the convergence rate, and "
+        "95% confidence intervals across a seeded instance family.  Figures show the "
+        "convergence and matched-cost frontiers and per-family breakdowns.",
     ),
     (
         "Audit discipline",

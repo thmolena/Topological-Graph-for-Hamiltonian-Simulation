@@ -21,7 +21,21 @@ from pathlib import Path
 
 
 def _code_dir() -> Path:
-    return Path(__file__).resolve().parents[2]
+    """The submission/code directory holding scripts/ and configs/.
+
+    Prefer the current working directory (so ``cd submission/code &&
+    topoham-reproduce`` works for a non-editable ``pip install .``), falling back
+    to the packaged dev-tree location for an editable install.
+    """
+    cwd = Path.cwd()
+    if (cwd / "scripts" / "run.py").exists():
+        return cwd
+    cand = Path(__file__).resolve().parents[2]
+    if (cand / "scripts" / "run.py").exists():
+        return cand
+    raise SystemExit(
+        "topoham-reproduce must be run from the submission/code directory "
+        "(it needs scripts/ and configs/).")
 
 
 def _run(*args: str) -> None:
@@ -39,7 +53,8 @@ def _sync_submission() -> None:
     for path in (code / "figures").glob("*"):
         if path.suffix.lower() in {".pdf", ".png"}:
             shutil.copy2(path, submission / "figures" / path.name)
-    for name in ("main_results.tex",):
+    for name in ("macros.tex", "tab_matched.tex", "tab_gates.tex",
+                 "tab_family.tex", "tab_impotence.tex"):
         src = code / "results" / name
         if src.exists():
             shutil.copy2(src, submission / "tables" / name)

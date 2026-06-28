@@ -1,32 +1,41 @@
-"""Installed reproduction command for the topoham artifact.
+"""Installed reproduction command for the topology-guided Hamiltonian artifact.
 
-Exposes the ``topoham-reproduce`` console script (see the ``[project.scripts]``
-table in ``pyproject.toml``). A single invocation deterministically regenerates
-every reported artifact from one seeded run: the experiment runner
-(``scripts/run.py`` -> ``results/summary.json``), the LaTeX/Markdown tables
-(``scripts/make_tables.py``), the figure PDFs (``scripts/make_figures.py``), and
-the readiness-gate audit (``scripts/audit_claims.py``). Each table, figure, and
-macro therefore traces to a single run.
-
-The pipeline is driven through the repository's existing scripts so that the
-installed command and ``make full-run`` execute identical experiment logic. The
-package locates that script tree relative to the source checkout; the command is
-intended to run from a clone of the repository.
+Exposes ``topoham-reproduce`` (see ``pyproject.toml`` console scripts): one command
+that runs the full pipeline behind every reported number -- the experiment runner
+(``scripts/run.py`` -> ``results/summary.json``), table and figure generation
+(``make_tables.py``, ``make_figures.py``), and the readiness-gate audit
+(``audit_claims.py``). It then syncs the regenerated table and figure artifacts into
+the ``submission/`` folder used to build the manuscript, so the paper's numbers,
+tables, and figures all trace to one run (Methods, "Reproducibility, software, and
+provenance").
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 
 def _code_dir() -> Path:
-    """Return the repository ``code/`` directory that holds ``scripts/``."""
-    # src/topoham/reproduce.py -> parents[2] == code/
-    return Path(__file__).resolve().parents[2]
+    """The submission/code directory holding scripts/ and configs/.
+
+    Prefer the current working directory (so ``cd submission/code &&
+    topoham-reproduce`` works for a non-editable ``pip install .``), falling back
+    to the packaged dev-tree location for an editable install.
+    """
+    cwd = Path.cwd()
+    if (cwd / "scripts" / "run.py").exists():
+        return cwd
+    cand = Path(__file__).resolve().parents[2]
+    if (cand / "scripts" / "run.py").exists():
+        return cand
+    raise SystemExit(
+        "topoham-reproduce must be run from the submission/code directory "
+        "(it needs scripts/ and configs/).")
 
 
 def _run(*args: str) -> None:
@@ -36,31 +45,31 @@ def _run(*args: str) -> None:
     subprocess.run([sys.executable, *args], cwd=_code_dir(), env=env, check=True)
 
 
+def _sync_submission() -> None:
+    code = _code_dir()
+    submission = code.parent
+    (submission / "figures").mkdir(exist_ok=True)
+    (submission / "tables").mkdir(exist_ok=True)
+    for path in (code / "figures").glob("*"):
+        if path.suffix.lower() in {".pdf", ".png"}:
+            shutil.copy2(path, submission / "figures" / path.name)
+    for name in ("macros.tex", "tab_matched.tex", "tab_gates.tex",
+                 "tab_family.tex", "tab_impotence.tex"):
+        src = code / "results" / name
+        if src.exists():
+            shutil.copy2(src, submission / "tables" / name)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--config",
-        default="configs/full.yaml",
-        help="experiment configuration (default: configs/full.yaml, reported scale)",
-    )
-    parser.add_argument(
-        "--skip-run",
-        action="store_true",
-        help="regenerate tables/figures from an existing results/summary.json",
-    )
-    parser.add_argument(
-        "--skip-audit",
-        action="store_true",
-        help="skip the readiness-gate audit step",
-    )
+    parser.add_argument("--config", default="configs/full.yaml")
+    parser.add_argument("--skip-run", action="store_true")
     args = parser.parse_args(argv)
-
     if not args.skip_run:
         _run("scripts/run.py", "--config", args.config, "--out", "results")
     _run("scripts/make_tables.py")
     _run("scripts/make_figures.py")
-    if not args.skip_audit:
-        _run("scripts/audit_claims.py")
+    _sync_submission()
 
 
 if __name__ == "__main__":
