@@ -38,6 +38,9 @@ class Config:
     targets: List[float] = field(default_factory=lambda: [0.9, 0.99, 0.999])
     target_ref: float = 0.99             # target the learned router optimises for
     impotence_samples: int = 48          # random orderings per instance (Theorem 1)
+    impotence_max_n: int = 8             # cap n for the exact (dense) spectral-norm
+                                         # impotence sweep; larger n use the
+                                         # matrix-free HS surrogate + collisions
 
     @classmethod
     def load(cls, path: str | Path) -> "Config":
