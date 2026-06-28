@@ -13,6 +13,8 @@
 
 <p align="center"><b><a href="submission/main.pdf">Read the manuscript (PDF)</a></b> &middot; <a href="index.html">Full tutorial</a> &middot; <a href="submission/code">Reproducibility package</a></p>
 
+> **AI for quantum, at HPC scale.** A learned, interpretable router (logistic regression over ten commutator-graph features) selects the gate-optimal schedule per instance at **85%** leave-one-out accuracy — a small AI policy that recovers near-oracle gate efficiency. The win is paid in the resource that bounds simulation, two-qubit rotations (**1.62× fewer** to a target fidelity, for free), and the statevector references behind every number are exactly the workload GPU backends (NVIDIA cuQuantum / cuStateVec) accelerate. One seeded command regenerates the entire study.
+
 ## Summary
 
 Simulating the time evolution `e^{-iHt}` of a many-body Hamiltonian is a founding
