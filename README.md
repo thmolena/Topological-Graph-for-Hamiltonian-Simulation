@@ -3,13 +3,15 @@
 
 <p align="center">
   <a href="https://thmolena.github.io/P3-Lie-Topological-Graph-Policies-for-Hamiltonian-Simulation/"><img alt="Live demo" src="https://img.shields.io/badge/demo-live-1f6feb"></a>
-  <img alt="Paper" src="https://img.shields.io/badge/paper-in%20review-informational">
+  <a href="submission/main.pdf"><img alt="Paper (PDF)" src="https://img.shields.io/badge/paper-PDF%20%C2%B7%20in%20review-informational"></a>
   <img alt="Python" src="https://img.shields.io/badge/python-3.9%E2%80%933.13-3776ab">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
   <img alt="Reproducible" src="https://img.shields.io/badge/results-script--generated-success">
 </p>
 
 <p align="center"><b><a href="https://thmolena.github.io/P3-Lie-Topological-Graph-Policies-for-Hamiltonian-Simulation/">Open the in-browser demo</a></b> — select a Hamiltonian family and watch the first-order schedules collapse onto a single <code>r^-2</code> line (the visual proof of ordering impotence) while the antithetic schedule, at the identical rotation count, follows <code>r^-4</code>. The demonstration runs client-side and operates without installation.</p>
+
+<p align="center"><b><a href="submission/main.pdf">Read the manuscript (PDF)</a></b> &middot; <a href="index.html">Full tutorial</a> &middot; <a href="submission/code">Reproducibility package</a></p>
 
 ## Summary
 
