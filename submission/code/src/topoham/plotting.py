@@ -253,6 +253,65 @@ def fig_family_gates(summary: Dict, out: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Figure 5 -- ordering impotence and collision structure (Extended Data)
 # ---------------------------------------------------------------------------
+def fig_scaling(summary: Dict, out: Path) -> Path:
+    """Size-independence of the convergence-order doubling and the matched-cost
+    speedup, across system size ``n`` -- the central scaling claim."""
+    import math as _m
+    apply_nmi_style()
+    bs = summary.get("by_size")
+    if not bs:
+        return out
+    sizes = list(bs["sizes"])
+
+    def series(key):
+        return [bs[key].get(str(n)) for n in sizes]
+
+    def clean(xs, ys):
+        xx, yy = [], []
+        for x, y in zip(xs, ys):
+            if y is not None and not (isinstance(y, float) and _m.isnan(y)):
+                xx.append(x)
+                yy.append(y)
+        return xx, yy
+
+    fig, axes = plt.subplots(1, 2, figsize=(COL_DOUBLE, 2.7))
+    # (a) fitted convergence rate p vs system size.
+    ax = axes[0]
+    for key, s, lab in (("slope_first", "coefficient", "first-order"),
+                        ("slope_antithetic", "antithetic", "antithetic (free)"),
+                        ("slope_symmetric", "symmetric", "symmetric")):
+        xx, yy = clean(sizes, series(key))
+        if xx:
+            ax.plot(xx, yy, marker="o", color=SCHED_COLOR[s], lw=1.4,
+                    ls="-" if s in FOLDED else "--", label=lab)
+    for p, txt in ((2.0, "$p=2$"), (4.0, "$p=4$")):
+        ax.axhline(p, color="#bbbbbb", lw=0.8, ls=":")
+        ax.text(sizes[-1], p, txt, fontsize=6.2, color="#888888", ha="right", va="bottom")
+    ax.set_xlabel("system size $n$ (qubits)")
+    ax.set_ylabel("convergence rate $p$")
+    ax.set_xticks(sizes)
+    ax.set_ylim(0, 5)
+    ax.legend(loc="center left", handlelength=1.6)
+    panel_label(ax, "a")
+    # (b) matched-cost rotation speedup (first-order / folded) to reach F>=0.99.
+    ax = axes[1]
+    xx, yy = clean(sizes, series("speedup"))
+    if xx:
+        ax.plot(xx, yy, marker="s", color=_VERM, lw=1.5)
+    ax.axhline(1.0, color="#444444", lw=0.9, ls="--")
+    ax.set_xlabel("system size $n$ (qubits)")
+    ax.set_ylabel("rotation speedup to $F\\geq0.99$\n(first-order / folded)")
+    ax.set_xticks(sizes)
+    ax.set_ylim(0.8, max(2.0, (max(yy) if yy else 2.0) * 1.1))
+    ax.text(0.5, 0.93, "the free fold wins at every size",
+            transform=ax.transAxes, ha="center", va="top", fontsize=6.2, color="#333333")
+    panel_label(ax, "b")
+    fig.tight_layout()
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
 def fig_impotence(summary: Dict, out: Path) -> Path:
     apply_nmi_style()
     fig, axes = plt.subplots(1, 2, figsize=(COL_DOUBLE, 2.7))

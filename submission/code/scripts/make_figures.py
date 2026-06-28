@@ -17,8 +17,10 @@ def main() -> None:
     plotting.fig_frontier(summary, out / "fig_frontier.pdf")
     plotting.fig_family_gates(summary, out / "fig_family.pdf")
     plotting.fig_impotence(summary, out / "fig_impotence.pdf")
+    plotting.fig_scaling(summary, out / "fig_scaling.pdf")
     print(f"wrote {out}/fig_schematic.pdf, {out}/fig_convergence.pdf, "
-          f"{out}/fig_frontier.pdf, {out}/fig_family.pdf, {out}/fig_impotence.pdf")
+          f"{out}/fig_frontier.pdf, {out}/fig_family.pdf, {out}/fig_impotence.pdf, "
+          f"{out}/fig_scaling.pdf")
 
 
 if __name__ == "__main__":

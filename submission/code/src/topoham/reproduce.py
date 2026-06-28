@@ -54,7 +54,7 @@ def _sync_submission() -> None:
         if path.suffix.lower() in {".pdf", ".png"}:
             shutil.copy2(path, submission / "figures" / path.name)
     for name in ("macros.tex", "tab_matched.tex", "tab_gates.tex",
-                 "tab_family.tex", "tab_impotence.tex"):
+                 "tab_family.tex", "tab_impotence.tex", "tab_scaling.tex"):
         src = code / "results" / name
         if src.exists():
             shutil.copy2(src, submission / "tables" / name)

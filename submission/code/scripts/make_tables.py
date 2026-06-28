@@ -25,6 +25,13 @@ def _g(v):
     return "---" if v is None else str(int(v))
 
 
+def _f2(v, nd=2):
+    """Format a float macro, tolerating ``None``/NaN as an em-dash."""
+    if v is None or (isinstance(v, float) and v != v):
+        return "---"
+    return f"{v:.{nd}f}"
+
+
 def main() -> None:
     s = json.loads(Path("results/summary.json").read_text())
     out = Path("results")
@@ -74,6 +81,17 @@ def main() -> None:
         cmd("IrrTFIM", f"{s['collisions_by_family']['tfim']['irreducible_frac']:.2f}"),
         cmd("IrrHeis", f"{s['collisions_by_family']['heisenberg']['irreducible_frac']:.2f}"),
         cmd("IrrMol", f"{s['collisions_by_family']['molecular_like']['irreducible_frac']:.2f}"),
+        # Scaling with system size (the matrix-free reference extends the exact
+        # benchmark; the convergence-order doubling is size independent).
+        cmd("MinN", h["min_n"]),
+        cmd("MaxN", h["max_n"]),
+        cmd("NSizes", h["n_sizes"]),
+        cmd("SlopeFirstMaxN", _f2(h["slope_first_maxn"])),
+        cmd("SlopeAntiMaxN", _f2(h["slope_antithetic_maxn"])),
+        cmd("SpeedupMaxN", _f2(h["speedup_maxn"])),
+        cmd("RefBackend", h.get("reference_backend", "expm")),
+        cmd("ImpMaxN", f"{imp.get('max_n', 8)}"),
+        cmd("ImpNInst", f"{imp.get('n_instances', h['n_instances'])}"),
         cmd("Runtime", f"{s['provenance']['runtime_sec']:.0f}"),
         cmd("PeakMem", f"{s['provenance']['peak_memory_mb']:.0f}"),
     ]
@@ -129,8 +147,23 @@ def main() -> None:
     lines += [r"\bottomrule", r"\end{tabular}"]
     (out / "tab_impotence.tex").write_text("\n".join(lines) + "\n")
 
+    # ---- Table 5: scaling with system size --------------------------------
+    bs = s["by_size"]
+    sizes = bs["sizes"]
+    lines = [r"\begin{tabular}{lccccc}", r"\toprule",
+             r"$n$ & $p$ (1st) & $p$ (anti) & $p$ (sym) & speedup & time (s) \\",
+             r"\midrule"]
+    for nq in sizes:
+        k = str(nq)
+        lines.append(
+            f"{nq} & {_f2(bs['slope_first'][k])} & {_f2(bs['slope_antithetic'][k])} & "
+            f"{_f2(bs['slope_symmetric'][k])} & {_f2(bs['speedup'][k])} & "
+            f"{bs['runtime_sec'][k]:.3f} \\\\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    (out / "tab_scaling.tex").write_text("\n".join(lines) + "\n")
+
     print("wrote results/macros.tex, tab_matched.tex, tab_gates.tex, "
-          "tab_family.tex, tab_impotence.tex")
+          "tab_family.tex, tab_impotence.tex, tab_scaling.tex")
 
 
 if __name__ == "__main__":

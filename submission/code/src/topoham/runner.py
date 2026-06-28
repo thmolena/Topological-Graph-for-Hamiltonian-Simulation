@@ -25,6 +25,7 @@ matrix-free commutator error form matches the dense pair-commutator sum
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -62,6 +63,31 @@ def _verify_pauli_algebra(rng: np.random.Generator) -> bool:
             fast = pauli.apply_pauli_rotation(psi, p, theta)
             exact = expm(-1j * theta * pauli.to_matrix(p)) @ psi
             if not np.allclose(fast, exact, atol=1e-9):
+                ok = False
+    return ok
+
+
+def _verify_reference_backend(backend: str, rng: np.random.Generator,
+                              tol: float = 1e-9) -> bool:
+    """Cross-check the scalable matrix-free reference against dense ``expm``.
+
+    The Krylov reference (``expm_multiply`` on a matrix-free sparse Hamiltonian)
+    is what extends the exact benchmark past the dense-``expm`` ceiling; this gate
+    confirms it reproduces dense ``expm`` to ``tol`` on small systems before it is
+    trusted at scale (records ``reference_backend_verified``).
+    """
+    if backend == "expm":
+        return True
+    from .env import reference_state
+    from .hamiltonians import build, FAMILIES
+    ok = True
+    for fam in FAMILIES:
+        for n in (3, 4, 5):
+            ham = build(fam, n, rng)
+            psi0 = pauli.plus_state(n)
+            a = reference_state(ham, 1.0, psi0, backend="expm")
+            b = reference_state(ham, 1.0, psi0, backend=backend)
+            if not np.allclose(a, b, atol=tol):
                 ok = False
     return ok
 
@@ -138,6 +164,8 @@ def run(cfg: Config, out_dir: Path) -> Dict:
 
     pauli_ok = _verify_pauli_algebra(rng)
     form_ok = error_form.verify_error_form(np.random.default_rng(cfg.seed + 1))
+    ref_ok = _verify_reference_backend(cfg.reference_backend,
+                                       np.random.default_rng(cfg.seed + 2))
 
     # 1. Build the instance pool.
     instances: List[Instance] = []
@@ -153,8 +181,10 @@ def run(cfg: Config, out_dir: Path) -> Dict:
     # 2. Per-instance (schedule, r) -> (fidelity, gates); plus impotence + features.
     per_inst: List[Dict[str, Dict[int, tuple]]] = []
     impotence_rows: List[Dict[str, float]] = []
+    inst_runtime: List[float] = []
     feats = [feature_vector(inst.ham) for inst in instances]
     for i, inst in enumerate(instances):
+        t_inst = time.perf_counter()
         env = TrotterEnv.from_hamiltonian(inst.ham, cfg.time, 1,
                                           reference_backend=cfg.reference_backend)
         rec: Dict[str, Dict[int, tuple]] = {s: {} for s in FIXED}
@@ -163,9 +193,16 @@ def run(cfg: Config, out_dir: Path) -> Dict:
                 res = env.evaluate_schedule(s, r, np.random.default_rng(cfg.seed + i))
                 rec[s][r] = (res["fidelity"], res["gates"])
         per_inst.append(rec)
-        impotence_rows.append(
-            error_form.ordering_impotence(inst.ham, np.random.default_rng(cfg.seed + 7 + i),
-                                          n_samples=cfg.impotence_samples))
+        inst_runtime.append(time.perf_counter() - t_inst)
+        # The exact (dense) spectral-norm impotence sweep is O((2^n)^3) over O(L^2)
+        # dense pair commutators; restrict it to the small-n subset and rely on the
+        # fully matrix-free collision structure + HS surrogate (both O(L^2 n)) to
+        # carry Theorem 1 at larger n.
+        if inst.n <= cfg.impotence_max_n:
+            impotence_rows.append(
+                error_form.ordering_impotence(
+                    inst.ham, np.random.default_rng(cfg.seed + 7 + i),
+                    n_samples=cfg.impotence_samples))
 
     # 3. Leave-one-instance-out learned router over schedules.
     labels = [_best_schedule_label(rec, cfg.target_ref) for rec in per_inst]
@@ -218,6 +255,46 @@ def run(cfg: Config, out_dir: Path) -> Dict:
                                 for tg in cfg.targets} for s in FIXED}
                       for fam, a in agg_fam.items()},
     }
+
+    # Scaling with system size n: the central substance claim is that the
+    # convergence-order doubling (first-order p~2 -> antithetic p~4) and the
+    # matched-cost speedup are *size independent*, while the matrix-free reference
+    # keeps the exact benchmark tractable. We aggregate slope, gates-to-target and
+    # wall-clock per size.
+    by_size_idx: Dict[int, List[int]] = {}
+    for i, inst in enumerate(instances):
+        by_size_idx.setdefault(inst.n, []).append(i)
+    sizes_sorted = sorted(by_size_idx)
+    agg_size = {nq: agg(by_size_idx[nq]) for nq in sizes_sorted}
+
+    def _g2t_size(nq: int, s: str) -> Optional[int]:
+        return _gates_to_target(curve_of(agg_size[nq], s), cfg.target_ref)
+
+    by_size: Dict = {
+        "target": cfg.target_ref,
+        "sizes": sizes_sorted,
+        "n_per_size": {nq: len(by_size_idx[nq]) for nq in sizes_sorted},
+        "slope_first": {nq: _mean_instance_slope(per_inst, by_size_idx[nq], grid, "coefficient")
+                        for nq in sizes_sorted},
+        "slope_antithetic": {nq: _mean_instance_slope(per_inst, by_size_idx[nq], grid, "antithetic")
+                             for nq in sizes_sorted},
+        "slope_symmetric": {nq: _mean_instance_slope(per_inst, by_size_idx[nq], grid, "symmetric")
+                            for nq in sizes_sorted},
+        "gates_first": {nq: _g2t_size(nq, "coefficient") for nq in sizes_sorted},
+        "gates_antithetic": {nq: _g2t_size(nq, "antithetic") for nq in sizes_sorted},
+        "gates_symmetric": {nq: _g2t_size(nq, "symmetric") for nq in sizes_sorted},
+        "runtime_sec": {nq: round(float(np.mean([inst_runtime[i] for i in by_size_idx[nq]])), 4)
+                        for nq in sizes_sorted},
+    }
+
+    def _speedup_size(nq: int) -> Optional[float]:
+        gf = by_size["gates_first"][nq]
+        folded = [g for g in (by_size["gates_antithetic"][nq],
+                              by_size["gates_symmetric"][nq]) if g is not None]
+        gb = min(folded) if folded else None
+        return round(gf / gb, 2) if (gf and gb) else None
+
+    by_size["speedup"] = {nq: _speedup_size(nq) for nq in sizes_sorted}
 
     # Per-instance gates-to-target at the reference target: the fair way to score
     # the instance-adaptive learned router against the per-instance oracle and the
@@ -295,6 +372,8 @@ def run(cfg: Config, out_dir: Path) -> Dict:
         "ratio_median_to_min_mean": round(float(col("ratio_median_to_min").mean()), 4),
         "ratio_coeff_to_min_max": round(float(col("ratio_coeff_to_min").max()), 4),
         "hs_ratio_max_to_min_mean": round(float(col("hs_ratio_max_to_min").mean()), 4),
+        "n_instances": len(impotence_rows),
+        "max_n": cfg.impotence_max_n,
     }
     # Collision structure per family (the resource that *is* ordering-reducible).
     collisions_by_family = {}
@@ -315,8 +394,10 @@ def run(cfg: Config, out_dir: Path) -> Dict:
         "provenance": prov.finalize().to_dict(),
         "pauli_algebra_verified": bool(pauli_ok),
         "error_form_verified": bool(form_ok),
+        "reference_backend_verified": bool(ref_ok),
         "schedules_table": sched_table,
         "gates_to_target": gates_to_target,
+        "by_size": by_size,
         "per_instance_gates_to_target": per_instance_g2t,
         "convergence": convergence,
         "slopes": slopes,
@@ -358,6 +439,16 @@ def run(cfg: Config, out_dir: Path) -> Dict:
         "slope_symmetric": slopes["symmetric"],
         "ordering_impotence_ratio": imp["ratio_median_to_min_mean"],
         "error_form_verified": bool(form_ok),
+        "reference_backend": cfg.reference_backend,
+        "reference_backend_verified": bool(ref_ok),
+        "min_n": int(min(sizes_sorted)),
+        "max_n": int(max(sizes_sorted)),
+        "n_sizes": len(sizes_sorted),
+        "slope_first_maxn": by_size["slope_first"][max(sizes_sorted)],
+        "slope_antithetic_maxn": by_size["slope_antithetic"][max(sizes_sorted)],
+        "speedup_maxn": by_size["speedup"][max(sizes_sorted)],
+        "impotence_max_n": cfg.impotence_max_n,
+        "impotence_n_instances": len(impotence_rows),
     }
 
     out_dir.mkdir(parents=True, exist_ok=True)
