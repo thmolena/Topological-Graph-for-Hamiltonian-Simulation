@@ -49,12 +49,52 @@ def dense_hamiltonian(ham: Hamiltonian) -> np.ndarray:
     return H
 
 
+def sparse_pauli_matrix(p: str) -> sp.csr_matrix:
+    r"""Sparse :math:`2^n\times2^n` matrix of a Pauli string, built matrix-free.
+
+    A Pauli string is a signed permutation: it sends each computational basis
+    state :math:`|x\rangle` to a unit-modulus phase times :math:`|x\oplus f\rangle`,
+    so its matrix has exactly one nonzero per column. We construct that pattern
+    directly from index arithmetic in :math:`O(2^n)` time and memory -- **never
+    forming a dense** :math:`2^n\times2^n` **array** -- which is what lets the
+    Krylov reference scale past the dense-``expm`` ceiling. ``X`` and ``Y`` flip
+    the qubit bit; ``Y`` and ``Z`` contribute a :math:`(-1)^{x_q}` phase, and each
+    ``Y`` contributes a global factor of :math:`i`.
+    """
+    n = len(p)
+    dim = 1 << n
+    flip = 0            # bits flipped by X and Y
+    zy = 0              # bits carrying a (-1)^{x_q} phase (Y and Z)
+    n_y = 0             # number of Y factors (global i^{n_y})
+    for q, ch in enumerate(p):
+        bit = 1 << (n - 1 - q)          # qubit q is bit (n-1-q), big-endian
+        if ch == "X":
+            flip |= bit
+        elif ch == "Y":
+            flip |= bit
+            zy |= bit
+            n_y += 1
+        elif ch == "Z":
+            zy |= bit
+    cols = np.arange(dim, dtype=np.int64)
+    rows = cols ^ flip
+    parity = np.bitwise_count(cols & zy) & 1
+    vals = ((1j) ** n_y) * np.where(parity == 0, 1.0, -1.0)
+    return sp.csr_matrix((vals, (rows, cols)), shape=(dim, dim))
+
+
 def sparse_hamiltonian(ham: Hamiltonian) -> sp.csr_matrix:
-    """Sparse CSR Hermitian matrix of ``H`` for the Krylov reference."""
+    """Sparse CSR Hermitian matrix of ``H``, assembled matrix-free.
+
+    Each Pauli term is a one-nonzero-per-column signed permutation
+    (:func:`sparse_pauli_matrix`); summing ``c_j P_j`` gives ``H`` without ever
+    forming a dense matrix, so the Krylov reference (``expm_multiply``) scales to
+    large ``n`` where dense ``expm`` is intractable.
+    """
     dim = 1 << ham.n
     H = sp.csr_matrix((dim, dim), dtype=complex)
     for c, p in ham.terms:
-        H = H + c * sp.csr_matrix(pauli.to_matrix(p))
+        H = H + c * sparse_pauli_matrix(p)
     return H
 
 
