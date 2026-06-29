@@ -60,10 +60,10 @@ time evolution, and the order in which a Hamiltonian's terms are applied within 
 first-order (Lie--Trotter) step is a free parameter that leaves the gate count
 unchanged. Despite extensive study, however, term-ordering heuristics deliver only
 marginal and seemingly irreducible accuracy gains, and the reason has remained
-unclear. We tackle this problem by introducing \emph{commutator-graph scheduling}
+unclear. We introduce \emph{commutator-graph scheduling}
 (CGS), a framework that recasts the leading first-order error as an exact,
-matrix-free operator---the \emph{commutator error form}
-$E_\pi=\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]$---built as a signed sum of Pauli strings
+matrix-free operator, the \emph{commutator error form}
+$E_\pi=\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]$, built as a signed sum of Pauli strings
 over the edges of the Hamiltonian's commutator graph and validated against dense
 matrix exponentials to $10^{-9}$. From this representation we analytically prove
 that term ordering is impotent: reordering only re-signs the commutators in
@@ -73,14 +73,18 @@ then show that the genuinely free parameter is not the ordering but the per-step
 \emph{schedule}: a step-alternating \emph{antithetic} schedule cancels $E_\pi$
 exactly and converges at $O(t^3/r^2)$ while applying the identical $L\cdot r$
 rotations. Across $\Ninstances$ structured Hamiltonian instances
-(transverse-field Ising, Heisenberg, and molecular-like families, $4$--$8$ qubits)
-evaluated against exact statevector references, CGS increases the empirical
-convergence rate from $\SlopeFirst$ to $\SlopeAnti$ and reaches fidelity $0.99$
-with $\GateSpeedup\times$ fewer rotations than the best first-order ordering, while
-attaining $0.999$ where first-order Trotter does not. Finally, an interpretable
-learned scheduler over ten commutator-graph features selects the gate-optimal
-schedule per instance with $\LearnedAcc\%$ leave-one-out accuracy, recovering
-near-oracle efficiency. By improving the accuracy of first-order Trotterization
+(transverse-field Ising, Heisenberg, and molecular-like families) evaluated
+against exact statevector references, CGS increases the empirical convergence rate
+from $\SlopeFirst$ to $\SlopeAnti$ and reaches fidelity $0.99$ with
+$\GateSpeedup\times$ fewer rotations than the best first-order ordering, while
+attaining $0.999$ where first-order Trotter does not. A matrix-free Krylov
+reference extends the exact benchmark to $\MaxN$ qubits, across which the
+convergence-order doubling is \emph{size independent}: a first-order rate
+$\approx\!2$ and an antithetic rate $\approx\!4$ at every size from $\MinN$ to
+$\MaxN$ qubits, with the matched-cost speedup reaching $\SpeedupMaxN\times$.
+Finally, an interpretable learned scheduler over ten commutator-graph features
+selects the gate-optimal schedule per instance with $\LearnedAcc\%$ leave-one-out
+accuracy, recovering near-oracle efficiency. By improving the accuracy of first-order Trotterization
 while requiring no additional gates, qubits, or circuit depth, commutator-graph
 scheduling offers a zero-overhead, drop-in upgrade for quantum simulation on
 near-term hardware.
@@ -163,42 +167,51 @@ zero-overhead \emph{scheduling} choice---one that the impotence theorem shows a
 single fixed ordering can never realize---is, to our knowledge, new, and it changes
 the practical recommendation for first-order simulation.
 
-We make the following contributions.
-\begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
-    \item \textbf{An exact error certificate.} We introduce the commutator error
-      form [Eq.~\eqref{eq:errorform}], a matrix-free representation of the leading
-      Trotter error as a signed Pauli-string sum over the commutator graph,
-      validated against the dense pair-commutator sum to $10^{-9}$
-      (Definition~\ref{def:errorform}).
-    \item \textbf{An ordering-impotence theorem.} We analytically prove that a
-      single ordering cannot reduce the leading-error norm below an instance floor
-      that is exactly ordering invariant on collision-free families
-      (Theorem~\ref{thm:impotence}), explaining the empirical ceiling that ordering
-      heuristics encounter.
-    \item \textbf{A free second-order schedule.} We prove that the antithetic
-      schedule cancels the leading error and converges at second order at the
-      identical gate budget (Theorem~\ref{thm:antithetic}), and combine it with a
-      commuting-clique compression of the commutator graph
-      (Proposition~\ref{prop:colour}).
-    \item \textbf{A matched-cost benchmark.} We benchmark CGS against exact
-      statevector references on $\Ninstances$ structured Hamiltonian instances,
-      reporting rotations to a target fidelity and the empirical convergence rate;
-      CGS reaches $0.99$ with $\GateSpeedup\times$ fewer rotations and is the only
-      family of schedules to reach $0.999$ within the swept budget.
-    \item \textbf{An interpretable scheduler.} We add a learned scheduler over ten
-      commutator-graph features that selects the gate-optimal schedule per instance
-      with $\LearnedAcc\%$ leave-one-out accuracy and recovers near-oracle efficiency
-      (Proposition~\ref{prop:invariance}).
-\end{itemize}
+This manuscript makes six contributions. We introduce the commutator error
+form [Eq.~\eqref{eq:errorform}], a matrix-free representation of the leading
+Trotter error as a signed Pauli-string sum over the commutator graph, validated
+against the dense pair-commutator sum to $10^{-9}$ (Definition~\ref{def:errorform}).
+We prove that a single ordering cannot reduce the leading-error norm below an
+instance floor that is exactly ordering invariant on collision-free families
+(Theorem~\ref{thm:impotence}), which explains the empirical ceiling that ordering
+heuristics encounter. We prove that the antithetic schedule cancels the leading
+error and converges at second order at the identical gate budget
+(Theorem~\ref{thm:antithetic}), and we combine it with a commuting-clique
+compression of the commutator graph (Proposition~\ref{prop:colour}). We benchmark
+CGS against exact statevector references on $\Ninstances$ structured Hamiltonian
+instances, reporting rotations to a target fidelity and the empirical convergence
+rate; CGS reaches $0.99$ with $\GateSpeedup\times$ fewer rotations and is the only
+family of schedules to reach $0.999$ within the swept budget. A matrix-free Krylov
+reference extends the exact benchmark from the dense-exponential ceiling to $\MaxN$
+qubits; across $n=\MinN$ to $\MaxN$ the convergence-order doubling (first-order rate
+$\approx\!2$, antithetic rate $\approx\!4$) and the matched-cost speedup are size
+independent (Sec.~\ref{sec:scaling}). Finally, we add a learned scheduler over ten
+commutator-graph features that selects the gate-optimal schedule per instance with
+$\LearnedAcc\%$ leave-one-out accuracy and recovers near-oracle efficiency
+(Proposition~\ref{prop:invariance}).
 
 We state the boundaries of the study plainly. CGS is evaluated by classical
-statevector simulation on small systems ($n\le 8$ qubits) where an exact reference
+statevector simulation on systems up to $n=\MaxN$ qubits, where an exact reference
 is tractable, on synthetic and structured Hamiltonians, under a rotation-count cost
 model; the gains are asymptotic in the step size, and we report the crossover budget
 honestly. The antithetic schedule is not a new product-formula primitive---the
 symmetrization is classical---but its certified, zero-overhead deployment on the
 commutator graph, together with the impotence theorem that motivates it and the
 learned scheduler that selects it, is, to our knowledge, new.
+
+This work continues a program on the spectral truncation of operators for
+query-efficient quantum optimization and simulation. Earlier entries develop
+graph-conditioned trust regions for budgeted parameter
+search~\cite{huynh2026gctr,huynh2026gctrcal,huynh2026gctrcalpro}, the measurement
+and query accounting that fixes the cost model~\cite{huynh2026meascost,huynh2026certqb},
+and topology-conditioned transfer of optimizer state across
+instances~\cite{huynh2026paramxfer,huynh2026paramxferB}, culminating in
+operator-spectral truncated priors and spectral-truncation graph kernels for QAOA
+warm starts~\cite{huynh2026ostqaoa,huynh2026topoqaoa}. The present manuscript carries
+the same operator-spectral viewpoint from variational optimization to Hamiltonian
+simulation: the commutator error form is a matrix-free, edge-resolved truncation of
+the leading product-formula error on the commutator graph, and the matched-cost
+analysis reuses the query-budget discipline established in that line of work.
 
 % ============================================================
 \section{Commutator-graph scheduling}
@@ -230,10 +243,11 @@ numerical claim is anchored to a quantity that the accompanying code regenerates
     The leading error operator $E_\pi=\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]$ is the
     object everything turns on: reordering only re-signs it
     (Theorem~\ref{thm:impotence}), whereas a folded schedule cancels it
-    (Theorem~\ref{thm:antithetic}). Two integrity gates underpin the
+    (Theorem~\ref{thm:antithetic}). Three integrity gates underpin the
     benchmark---the fast Pauli-rotation kernel and dense \texttt{expm} agree to
-    $10^{-9}$, and the matrix-free error form agrees with the dense pair-commutator
-    sum to $10^{-9}$---before any number is emitted.}
+    $10^{-9}$, the matrix-free error form agrees with the dense pair-commutator sum
+    to $10^{-9}$, and the matrix-free Krylov reference agrees with dense
+    \texttt{expm} to $10^{-9}$---before any number is emitted.}
     \label{fig:schematic}
 \end{figure*}
 
@@ -245,9 +259,11 @@ term order and a fold---first-order, or the step-alternating antithetic fold---w
 holding the realized rotation count fixed. The product formula is executed by an
 exact, matrix-free statevector simulator and scored both by fidelity against
 $e^{-\ii Ht}$ and by the rotations needed to reach a target fidelity. We stress that
-no number is reported until two integrity gates pass: the fast Pauli-rotation kernel
-and dense \texttt{expm} agree to $10^{-9}$, and the matrix-free error form agrees
-with the dense pair-commutator sum to $10^{-9}$.
+no number is reported until three integrity gates pass: the fast Pauli-rotation
+kernel and dense \texttt{expm} agree to $10^{-9}$, the matrix-free error form agrees
+with the dense pair-commutator sum to $10^{-9}$, and the matrix-free Krylov reference
+(which extends the exact benchmark to $\MaxN$ qubits) agrees with dense \texttt{expm}
+to $10^{-9}$.
 
 \subsection{Pauli algebra and the matrix-free simulator}
 \label{sec:pauli}
@@ -539,7 +555,7 @@ and so is the standardized classifier's prediction.
 
 We evaluate CGS against exact statevector references on $\Ninstances$ structured
 Hamiltonian instances drawn from three families---transverse-field Ising,
-Heisenberg, and random molecular-like sums---at $n\in\{4,5,6,7,8\}$ qubits
+Heisenberg, and random molecular-like sums---at $n\in\{4,6,8,10,12,14\}$ qubits
 (Appendix~\ref{app:methods}). We compare six schedules at a matched rotation count:
 three first-order schedules (\textbf{random}; \textbf{coefficient}, ordered by
 $\abs{c_j}$; and \textbf{clique}, which lays the commuting cliques of $\calG(H)$ out
@@ -547,9 +563,11 @@ contiguously); two second-order folds (\textbf{antithetic}, which alternates a c
 order with its reverse at the identical $L\cdot r$ rotation count, and
 \textbf{symmetric}, the Strang half-step fold); and the \textbf{learned} scheduler
 that selects among them per instance. Each schedule's Trotter state is scored against
-the exact reference $e^{-\ii Ht}\ket{\psi_0}$ produced by dense \texttt{expm}
-(cross-checked against Krylov \texttt{expm\_multiply}), with probe state
-$\ket{+}^{\otimes n}$.
+the exact reference $e^{-\ii Ht}\ket{\psi_0}$, computed for $n\le\ImpMaxN$ by dense
+\texttt{expm} and at all sizes by a \emph{matrix-free} Krylov reference
+(\texttt{expm\_multiply} on a sparse, matrix-free Hamiltonian) that agrees with
+dense \texttt{expm} to $10^{-9}$ and extends the exact benchmark to $\MaxN$ qubits;
+the probe state is $\ket{+}^{\otimes n}$.
 
 \subsection{Ordering is empirically impotent}
 \label{sec:impotence}
@@ -560,11 +578,12 @@ Heisenberg families produce \emph{no} collisions, so $\IrrTFIM$ and $\IrrHeis$ o
 the leading error is exactly ordering invariant; even on the dense molecular-like
 family the ordering-invariant fraction is $\IrrMol$. Figure~\ref{fig:impotence}(a)
 quantifies the consequence directly: sampling orderings per instance and forming the
-exact leading-error spectral norm, the coefficient ordering sits within a factor
-$\ImpCoeff$ of the per-instance minimum on average, a median random ordering within
-$\ImpMedian$, and the worst single instance across all $\Ninstances$ instances reaches
-only $\ImpMax$; the matrix-free Hilbert--Schmidt surrogate moves even less, within
-$\ImpHS$. We emphasize that this is not a statement about a particular heuristic but
+exact leading-error spectral norm (computed on the $\ImpNInst$ instances with
+$n\le\ImpMaxN$, where the dense spectral norm is tractable), the coefficient ordering
+sits within a factor $\ImpCoeff$ of the per-instance minimum on average, a median
+random ordering within $\ImpMedian$, and the worst single instance reaches only
+$\ImpMax$; the matrix-free Hilbert--Schmidt surrogate, which is computable at every
+size, moves even less, within $\ImpHS$. We emphasize that this is not a statement about a particular heuristic but
 about \emph{every} ordering, and that it is the precise, provable form of the
 ``ordering is within noise'' folklore. A single ordering simply cannot escape the
 first-order rate, which is exactly why we enlarge the search space from orderings to
@@ -577,7 +596,7 @@ schedules.
 term pairs (edges of $\calG(H)$), the mean number of \emph{colliding} pairs (those
 sharing a leading-error Pauli string with another pair---the only ordering-reducible
 part), and the resulting ordering-invariant fraction of the leading error, over the
-$N=40$ instances per family. Transcribed from the \texttt{collisions\_by\_family}
+$N=48$ instances per family. Transcribed from the \texttt{collisions\_by\_family}
 block of \texttt{results/summary.json}.}
 \label{tab:impotence}
 \resizebox{\columnwidth}{!}{\input{code/results/tab_impotence.tex}}
@@ -589,11 +608,13 @@ block of \texttt{results/summary.json}.}
     \caption{\textbf{The leading error is nearly ordering invariant.}
     (a)~Spectral norm of the leading-error operator $E_\pi$ for the coefficient
     ordering and for sampled orderings, divided by the per-instance minimum over
-    orderings; bars are means over all $\Ninstances$ instances. A median ordering is
-    within $\ImpMedian\times$ of the floor and the coefficient ordering within
+    orderings; bars are means over the $\ImpNInst$ instances with $n\le\ImpMaxN$
+    (where the dense spectral norm is tractable). A median ordering is within
+    $\ImpMedian\times$ of the floor and the coefficient ordering within
     $\ImpCoeff\times$; the worst single instance reaches $\ImpMax\times$. The dashed
     line marks the unreducible floor. (b)~The fraction of the leading error that is
-    ordering invariant by family: complete on transverse-field Ising and Heisenberg,
+    ordering invariant by family (over all $\Ninstances$ instances): complete on
+    transverse-field Ising and Heisenberg,
     and $\IrrMol$ on the dense molecular-like family. Reordering cannot move what
     these bars measure.}
     \label{fig:impotence}
@@ -697,6 +718,57 @@ are the only schedules to reach $0.999$. Transcribed from the
 \input{code/results/tab_gates.tex}
 \end{table}
 
+\subsection{The advantage is size independent}
+\label{sec:scaling}
+
+A central question for any product-formula improvement is whether it survives at
+scale. Because the convergence-order argument of Theorem~\ref{thm:antithetic} is
+size independent, it should; we verify this directly. The matrix-free Krylov
+reference removes the dense-exponential bottleneck and lets us evaluate the exact
+benchmark from $n=\MinN$ up to $n=\MaxN$ qubits, the same range over which a dense
+$e^{-\ii Ht}$ would be intractable. As seen in Fig.~\ref{fig:scaling}(a), the fitted
+convergence rate is flat in $n$: the three first-order schedules hold a rate
+$\approx\!2$ at every size (rate $\SlopeFirstMaxN$ at $n=\MaxN$), while the
+antithetic and symmetric folds hold a rate $\approx\!4$ (antithetic rate
+$\SlopeAntiMaxN$ at $n=\MaxN$). The doubling of the convergence order is therefore
+not a small-system artifact but a property of the schedule. Figure~\ref{fig:scaling}(b)
+and Table~\ref{tab:scaling} show the same conclusion in the matched-cost metric: the
+free antithetic fold reaches fidelity $0.99$ at fewer rotations than the best
+first-order ordering at \emph{every} size, with the speedup reaching
+$\SpeedupMaxN\times$ at $n=\MaxN$. We emphasize that this scaling is obtained with
+the antithetic schedule's identical $L\cdot r$ rotation count, so the advantage is
+recovered at zero overhead independently of system size.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.86\textwidth]{fig_scaling.pdf}
+    \caption{\textbf{The convergence-order doubling and the matched-cost speedup are
+    size independent.} (a)~Fitted convergence rate $p$ (mean per-instance log--log
+    slope of infidelity vs.\ $r$) versus system size $n$. The first-order schedule
+    (blue, dashed) holds $p\approx2$ and the antithetic (vermillion) and symmetric
+    (green) folds hold $p\approx4$ across the whole range $n=\MinN$--$\MaxN$; the
+    dotted guides mark $p=2$ and $p=4$. (b)~Matched-cost rotation speedup to reach
+    $F\geq0.99$ (best first-order ordering divided by the best fold) versus $n$; the
+    free fold wins at every size, reaching $\SpeedupMaxN\times$ at $n=\MaxN$. The
+    matrix-free Krylov reference, validated against dense \texttt{expm} to $10^{-9}$,
+    is what makes the exact benchmark tractable to $\MaxN$ qubits.}
+    \label{fig:scaling}
+\end{figure*}
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Scaling of the convergence rate and speedup with system size.} For
+each size $n$, the fitted convergence rate $p$ of the first-order (1st), antithetic
+(anti), and symmetric (sym) schedules, the matched-cost rotation speedup to reach
+$F\geq0.99$ (best first-order ordering / best fold), and the mean wall-clock time per
+instance. The first-order rate stays $\approx2$ and the folded rates stay $\approx4$
+at every size, while the matrix-free reference keeps the per-instance cost modest up
+to $n=\MaxN$. Transcribed from the \texttt{by\_size} block of
+\texttt{results/summary.json}.}
+\label{tab:scaling}
+\resizebox{\columnwidth}{!}{\input{code/results/tab_scaling.tex}}
+\end{table}
+
 \subsection{Instance dependence and the learned scheduler}
 \label{sec:family}
 
@@ -721,7 +793,7 @@ the hard instances, and leave the fast-forwardable ones first-order.
     (antithetic, symmetric) reach the target at substantially fewer rotations than any
     first-order schedule. On Heisenberg the commuting-clique first-order schedules are
     already near-exact at the minimal budget, so folding only adds overhead. Bars are
-    over the $N=40$ instances per family.}
+    over the $N=48$ instances per family.}
     \label{fig:family}
 \end{figure*}
 
@@ -806,9 +878,13 @@ We report the boundaries of the study explicitly. (i)~The second-order advantage
 small-step-size effect: at coarse steps the antithetic fold can be \emph{worse} than a
 good first-order ordering (its curve in Fig.~\ref{fig:frontier} starts above and crosses
 below near the intermediate budget); we report the crossover rather than hide it.
-(ii)~The exact statevector reference requires forming $e^{-\ii Ht}$, limiting us to
-$n\le8$ qubits, so the effect at scale---where a tensor-network or Krylov reference is
-needed---is not measured, although the convergence-rate argument is size independent.
+(ii)~The matrix-free Krylov reference extends the exact benchmark to $n=\MaxN$
+qubits---and we verify there that the advantage is size independent
+(Sec.~\ref{sec:scaling})---but truly large systems ($n\gtrsim30$), where even a
+sparse statevector is intractable and a tensor-network reference is required, are not
+reached; the exact \emph{spectral-norm} impotence sweep is itself capped at
+$n\le\ImpMaxN$ (the matrix-free collision and Hilbert--Schmidt statistics carry
+Theorem~\ref{thm:impotence} at all sizes).
 (iii)~The families are transverse-field Ising, Heisenberg, and random local two-body
 molecular-like sums, a proxy for, not an instance of, mapped molecular
 electronic-structure Hamiltonians at
@@ -822,10 +898,11 @@ validation.
 \paragraph{Outlook.}
 Most critically, because the antithetic upgrade changes no gate, qubit, or depth count,
 commutator-graph scheduling constitutes a zero-overhead accuracy improvement that any
-first-order Trotter compilation can adopt unchanged on near-term hardware. Natural next
-steps are larger systems with scalable references, real mapped molecular Hamiltonians,
-higher-order folded schedules, and a graph neural policy trained directly on a
-differentiable matched-cost objective. In short, by recasting the leading Trotter error
+first-order Trotter compilation can adopt unchanged on near-term hardware. Having shown
+that the advantage is size independent up to $n=\MaxN$ qubits with a matrix-free
+reference, natural next steps are truly large systems with a tensor-network reference,
+real mapped molecular Hamiltonians, higher-order folded schedules, and a graph neural
+policy trained directly on a differentiable matched-cost objective. In short, by recasting the leading Trotter error
 as a certifiable operator on the commutator graph, CGS reframes term ordering as the
 weak lever it provably is, and identifies the per-step schedule as the free, structured
 degree of freedom that simulation should exploit.
@@ -862,16 +939,25 @@ random local two-body Pauli terms with seeded Gaussian coefficients---a tractabl
 stand-in for the dense, irregular anticommutation structure of Jordan--Wigner /
 Bravyi--Kitaev mapped electronic-structure
 Hamiltonians~\cite{bravyi2002fermionic,whitfield2011simulation}. The reported-scale
-configuration (\texttt{configs/full.yaml}) uses sizes $n\in\{4,5,6,7,8\}$, eight seeded
-instances per (family, size), evolution time $t=\EvolTime$, a reference budget of
-$r=\RefSteps$ steps, and a step grid $\{1,2,4,6,8,12,16,24\}$ for the convergence and
-frontier curves, giving $\Ninstances$ instances in total. For each instance and schedule
-we evaluate the product formula, score fidelity and infidelity against the exact
-reference, and record the realized rotation count; from the (rotation count, fidelity)
-curves we read the rotations to each target fidelity and fit the convergence rate.
-Ordering impotence is measured by sampling $48$ orderings per instance and forming the
-exact leading-error spectral norm. Per-schedule means carry 95\% confidence intervals
-$1.96\,\hat\sigma/\sqrt{N}$.
+configuration (\texttt{configs/full.yaml}) uses sizes $n\in\{4,6,8,10,12,14\}$, eight
+seeded instances per (family, size), evolution time $t=\EvolTime$, a reference budget
+of $r=\RefSteps$ steps, and a step grid $\{1,2,4,6,8,12,16,24\}$ for the convergence
+and frontier curves, giving $\Ninstances$ instances in total. The exact reference
+$e^{-\ii Ht}\ket{\psi_0}$ is computed either by dense \texttt{scipy.linalg.expm} (the
+ground truth, used for $n\le\ImpMaxN$) or by the \emph{matrix-free} Krylov reference
+\texttt{expm\_multiply} applied to a sparse Hamiltonian assembled term-by-term from
+one-nonzero-per-column Pauli permutations [Eq.~\eqref{eq:rotation} extended to the
+reference]; the latter never forms a $2^n\times2^n$ matrix, agrees with dense
+\texttt{expm} to $10^{-9}$ (the \texttt{reference\_backend\_verified} flag), and is
+what extends the exact benchmark to $n=\MaxN$. For each instance and schedule we
+evaluate the product formula, score fidelity and infidelity against the reference, and
+record the realized rotation count; from the (rotation count, fidelity) curves we read
+the rotations to each target fidelity and fit the convergence rate. Ordering impotence
+is measured by sampling $48$ orderings per instance and forming the exact leading-error
+spectral norm on the $\ImpNInst$ instances with $n\le\ImpMaxN$, where the dense
+$O((2^n)^3)$ spectral norm is tractable; the matrix-free Hilbert--Schmidt surrogate and
+collision statistics are computed at all sizes. Per-schedule means carry 95\%
+confidence intervals $1.96\,\hat\sigma/\sqrt{N}$.
 
 \section{Software, validation, and reproducibility}
 \label{app:repro}
@@ -891,16 +977,22 @@ module computes the ten listing-order-invariant features the learned scheduler r
 (term, step-fraction) rotations whose seam-merged length is the gate cost on which all
 schedules are compared (\texttt{schedules.py}, \texttt{env.py}); the learned scheduler
 (\texttt{LearnedSchedulePolicy}) is the standardized logistic-regression classifier of
-Sec.~\ref{sec:router_thy}, trained leave-one-instance-out.
+Sec.~\ref{sec:router_thy}, trained leave-one-instance-out. The exact reference is built
+in \texttt{env.py}: \texttt{sparse\_pauli\_matrix} assembles each Pauli string as a
+one-nonzero-per-column signed permutation directly from index arithmetic in $O(2^n)$,
+so the sparse Hamiltonian and its \texttt{expm\_multiply} reference are formed without
+a dense $2^n\times2^n$ matrix.
 
 The single source of truth is \texttt{results/summary.json}, written by the runner with
 full provenance (seed, command, platform, package versions, runtime, peak memory) and
-two integrity flags that must pass before any fidelity is produced:
+\emph{three} integrity flags that must pass before any fidelity is produced:
 \texttt{pauli\_algebra\_verified} (the fast kernel matches dense \texttt{expm} to
-$10^{-9}$) and \texttt{error\_form\_verified} (the matrix-free error form matches the
-dense pair-commutator sum to $10^{-9}$). On the run reported here (seed $0$,
-Python~3.13, macOS arm64), the experiment completed in $\approx\Runtime$\,s wall-clock
-with $\approx\PeakMem$\,MB peak memory, both flags \texttt{true}. The macros, tables,
+$10^{-9}$), \texttt{error\_form\_verified} (the matrix-free error form matches the dense
+pair-commutator sum to $10^{-9}$), and \texttt{reference\_backend\_verified} (the
+matrix-free Krylov reference matches dense \texttt{expm} to $10^{-9}$ before it is used
+at scale). On the run reported here (seed $0$, Python~3.13, macOS arm64), the experiment
+completed in $\approx\Runtime$\,s wall-clock with $\approx\PeakMem$\,MB peak memory, all
+three flags \texttt{true}. The macros, tables,
 and figures in this manuscript are generated directly from \texttt{summary.json}, so no
 number is entered by hand. The full pipeline is reproduced from the accompanying code by
 \begin{verbatim}
@@ -1064,6 +1156,16 @@ Aric~A. Hagberg, Daniel~A. Schult, and Pieter~J. Swart.
 \newblock Exploring network structure, dynamics, and function using networkx.
 \newblock In \emph{Proceedings of the 7th Python in Science Conference}, pages
   11--15, 2008.
+
+\bibitem{huynh2026gctr} M.~Huynh. Query-Efficient Quantum Approximate Optimization via Graph-Conditioned Trust Regions. arXiv:2604.24803 (2026).
+\bibitem{huynh2026gctrcal} M.~Huynh. Graph-conditioned trust regions for uncertainty-calibrated quantum approximate optimization. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026gctrcalpro} M.~Huynh. Graph-conditioned trust regions for uncertainty-calibrated quantum approximate optimization (extended). arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026meascost} M.~Huynh. The measurement cost of warm-started low-depth QAOA. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026certqb} M.~Huynh. Certified query budgets for the quantum approximate optimization algorithm. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026paramxfer} M.~Huynh. Topology-Conditioned QAOA Parameter Transfer for Budgeted Graph Optimization. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026paramxferB} M.~Huynh. Topology-Conditioned QAOA Parameter Transfer for Budgeted Graph Optimization (companion). arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026ostqaoa} M.~Huynh. Operator-Spectral Truncated Priors for Query-Efficient QAOA Parameter Search. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026topoqaoa} M.~Huynh. Spectral-truncation graph kernels for QAOA warm starts: topology-conditioned schedule transfer beyond depth one. arXiv:2026.XXXXX (2026).
 
 \end{thebibliography}
 

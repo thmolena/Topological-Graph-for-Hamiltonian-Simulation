@@ -94,6 +94,10 @@
   canvas{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:10px}
   .demo-cap{font-size:12.5px;color:var(--muted);margin-top:10px}
   .badge{display:inline-block;font-size:11px;font-weight:600;color:var(--accent2);background:rgba(31,111,235,.1);border:1px solid rgba(31,111,235,.25);border-radius:6px;padding:2px 8px;margin-left:6px}
+  ol.refs{margin:0;padding-left:1.6em;max-width:82ch}
+  ol.refs li{font-size:.9rem;line-height:1.55;margin-bottom:11px;color:var(--ink)}
+  ol.refs li .venue{font-style:italic}
+  ol.refs li .auth{color:var(--muted)}
   footer{padding:40px 20px 64px;color:var(--muted);font-size:13.5px;text-align:center}
   @media(max-width:820px){.grid2,.grid3,.demo-grid{grid-template-columns:1fr}}
 </style>
@@ -109,6 +113,7 @@
   <a href="#results">Results</a>
   <a href="#demo">Demo</a>
   <a href="#repro">Reproducibility</a>
+  <a href="#references">References</a>
 </div></nav>
 
 <header class="hero">
@@ -143,6 +148,7 @@
   <p class="lead">The free parameter in first-order Trotterization is not the ordering but the schedule; the commutator graph tells us why ordering fails and how to schedule instead.</p>
   <p>Simulating the time evolution $e^{-\mathrm{i}Ht}$ of a quantum many-body Hamiltonian is the founding application of quantum computers (Feynman 1982; Lloyd 1996), and the product formula remains its dominant primitive. Given a Hamiltonian in Pauli form $H=\sum_{j=1}^{L} c_j P_j$, the first-order (Lie&ndash;Trotter) approximant with $r$ steps and term ordering $\pi$ is $U_{\mathrm{Trot}}(\pi)=\big(\prod_{j\in\pi} e^{-\mathrm{i}\,c_j P_j\, t/r}\big)^{r}$. Its deviation from the exact propagator is governed by the commutators of the summands, made tight and explicit by the modern commutator-scaling analysis (Childs et al., <em>Theory of Trotter Error with Commutator Scaling</em>, 2021), the theoretical anchor of this work.</p>
   <p>The cost of a first-order schedule is exactly one rotation $e^{-\mathrm{i}c_j P_j t/r}$ per term per step, so the gate count $L\!\cdot\!r$ is <strong>independent of the ordering</strong> $\pi$, and indeed of whether that ordering varies between steps. A substantial empirical literature has asked how much reordering buys (Tranter 2019; Poulin 2015; Hastings 2015), repeatedly finding the effect modest. This work explains that ceiling and then circumvents it: we show that the ceiling is a theorem about <em>orderings</em>, and that the larger free object&mdash;the per-step <em>schedule</em>&mdash;escapes it at no additional gate cost.</p>
+  <p>The natural structure for this question is the <em>commutator graph</em> (or anticommutation graph): one node per term, with an edge between every pair of terms that anticommute. This is the same graph used in measurement grouping for variational algorithms, where a clique cover into mutually commuting sets reduces the number of measurement settings (Verteletskyi 2020; Gokhale 2020; Crawford 2021). Despite this rich structure, the empirical verdict on ordering has been consistently underwhelming, with reordering gains widely regarded as &ldquo;within noise&rdquo;; <em>why</em> a free parameter should be so impotent had not previously been explained. Our resolution is to enlarge the free degree of freedom from a single ordering to a per-step schedule $\sigma=(\pi_1,\dots,\pi_r)$, realized at the identical $L\!\cdot\!r$ rotation count. The antithetic schedule&mdash;alternating a term order with its reverse on successive steps&mdash;makes each adjacent step-pair a palindromic, symmetric product formula whose leading commutator error vanishes. The underlying mechanism is the classical symmetrization of Suzuki (Suzuki 1991; Hatano 2005); its reading as a zero-overhead <em>scheduling</em> choice that a single fixed ordering can never realize is, to our knowledge, new.</p>
 </section>
 
 <section id="dichotomy">
@@ -295,6 +301,34 @@ export KMP_DUPLICATE_LIB_OK=TRUE
 topoham-reproduce --config configs/full.yaml   <span class="c"># summary.json, macros, tables, figures</span>
 make audit            <span class="c"># readiness gate: traceable numbers, integrity flags, no forbidden claims</span></pre>
   <p class="note">The run is fully determined by seeded draws; the reported scale (<code>configs/full.yaml</code>) is 120 instances across three families and five sizes $n\in\{4,\dots,8\}$ with eight seeds each, time $t=1.0$, step grid $\{1,2,4,6,8,12,16,24\}$. Runtime and memory are logged per benchmark, and all experiments run on commodity CPU hardware. The interactive demonstration above re-implements the same exact single-Pauli rotation in vanilla JavaScript, so the math on this page matches the math in the package.</p>
+</section>
+
+<section id="references">
+  <h2>Related Work and References</h2>
+  <p class="lead">The theoretical anchor of this work is the commutator-scaling analysis of Trotter error by Childs, Su, Tran, Wiebe, and Zhu (<em>Theory of Trotter Error with Commutator Scaling</em>, 2021); the antithetic upgrade is the classical Suzuki&ndash;Hatano product-formula symmetrization (Suzuki 1991; Hatano and Suzuki 2005) reframed as a free per-step schedule. The empirical ceiling we explain is documented in the ordering literature for electronic-structure simulation (Tranter, Love, Mintert, and Wiebe 2019; Poulin et al. 2015; Hastings et al. 2015), and the commutator graph itself is borrowed from measurement grouping in variational algorithms (Verteletskyi, Yen, and Izmaylov 2020; Gokhale et al. 2020). The full bibliography of the manuscript follows.</p>
+  <ol class="refs">
+    <li><span class="auth">R. P. Feynman.</span> &ldquo;Simulating physics with computers.&rdquo; <span class="venue">International Journal of Theoretical Physics</span> 1982. <a href="https://doi.org/10.1007/BF02650179" target="_blank" rel="noreferrer">doi:10.1007/BF02650179</a></li>
+    <li><span class="auth">S. Lloyd.</span> &ldquo;Universal quantum simulators.&rdquo; <span class="venue">Science</span> 1996. <a href="https://doi.org/10.1126/science.273.5278.1073" target="_blank" rel="noreferrer">doi:10.1126/science.273.5278.1073</a></li>
+    <li><span class="auth">H. F. Trotter.</span> &ldquo;On the product of semi-groups of operators.&rdquo; <span class="venue">Proceedings of the American Mathematical Society</span> 1959. <a href="https://doi.org/10.1090/S0002-9939-1959-0108732-6" target="_blank" rel="noreferrer">doi:10.1090/S0002-9939-1959-0108732-6</a></li>
+    <li><span class="auth">M. Suzuki.</span> &ldquo;General theory of fractal path integrals with applications to many-body theories and statistical physics.&rdquo; <span class="venue">Journal of Mathematical Physics</span> 1991. <a href="https://doi.org/10.1063/1.529425" target="_blank" rel="noreferrer">doi:10.1063/1.529425</a></li>
+    <li><span class="auth">A. M. Childs, Y. Su, M. C. Tran, N. Wiebe, and S. Zhu.</span> &ldquo;Theory of Trotter error with commutator scaling.&rdquo; <span class="venue">Physical Review X</span> 2021. <a href="https://doi.org/10.1103/PhysRevX.11.011020" target="_blank" rel="noreferrer">doi:10.1103/PhysRevX.11.011020</a></li>
+    <li><span class="auth">A. M. Childs, D. Maslov, Y. Nam, N. J. Ross, and Y. Su.</span> &ldquo;Toward the first quantum simulation with quantum speedup.&rdquo; <span class="venue">Proceedings of the National Academy of Sciences</span> 2018. <a href="https://doi.org/10.1073/pnas.1801723115" target="_blank" rel="noreferrer">doi:10.1073/pnas.1801723115</a></li>
+    <li><span class="auth">N. Hatano and M. Suzuki.</span> &ldquo;Finding exponential product formulas of higher orders.&rdquo; <span class="venue">Lecture Notes in Physics</span> 2005. <a href="https://doi.org/10.1007/11526216_2" target="_blank" rel="noreferrer">doi:10.1007/11526216_2</a></li>
+    <li><span class="auth">A. M. Childs, A. Ostrander, and Y. Su.</span> &ldquo;Faster quantum simulation by randomization.&rdquo; <span class="venue">Quantum</span> 2019. <a href="https://doi.org/10.22331/q-2019-09-02-182" target="_blank" rel="noreferrer">doi:10.22331/q-2019-09-02-182</a></li>
+    <li><span class="auth">E. Campbell.</span> &ldquo;Random compiler for fast Hamiltonian simulation.&rdquo; <span class="venue">Physical Review Letters</span> 2019. <a href="https://doi.org/10.1103/PhysRevLett.123.070503" target="_blank" rel="noreferrer">doi:10.1103/PhysRevLett.123.070503</a></li>
+    <li><span class="auth">D. Poulin, M. B. Hastings, D. Wecker, N. Wiebe, A. C. Doherty, and M. Troyer.</span> &ldquo;The Trotter step size required for accurate quantum simulation of quantum chemistry.&rdquo; <span class="venue">Quantum Information &amp; Computation</span> 2015.</li>
+    <li><span class="auth">M. B. Hastings, D. Wecker, B. Bauer, and M. Troyer.</span> &ldquo;Improving quantum algorithms for quantum chemistry.&rdquo; <span class="venue">Quantum Information &amp; Computation</span> 2015.</li>
+    <li><span class="auth">V. Verteletskyi, T.-C. Yen, and A. F. Izmaylov.</span> &ldquo;Measurement optimization in the variational quantum eigensolver using a minimum clique cover.&rdquo; <span class="venue">The Journal of Chemical Physics</span> 2020. <a href="https://doi.org/10.1063/1.5141458" target="_blank" rel="noreferrer">doi:10.1063/1.5141458</a></li>
+    <li><span class="auth">P. Gokhale, O. Angiuli, Y. Ding, K. Gui, T. Tomesh, M. Suchara, M. Martonosi, and F. T. Chong.</span> &ldquo;$O(N^3)$ measurement cost for variational quantum eigensolver on molecular Hamiltonians.&rdquo; <span class="venue">IEEE Transactions on Quantum Engineering</span> 2020. <a href="https://doi.org/10.1109/TQE.2020.3035814" target="_blank" rel="noreferrer">doi:10.1109/TQE.2020.3035814</a></li>
+    <li><span class="auth">O. Crawford, B. van Straaten, D. Wang, T. Parks, E. Campbell, and S. Brierley.</span> &ldquo;Efficient quantum measurement of Pauli operators in the presence of finite sampling error.&rdquo; <span class="venue">Quantum</span> 2021. <a href="https://doi.org/10.22331/q-2021-01-20-385" target="_blank" rel="noreferrer">doi:10.22331/q-2021-01-20-385</a></li>
+    <li><span class="auth">A. Tranter, P. J. Love, F. Mintert, and N. Wiebe.</span> &ldquo;Ordering of Trotterization: Impact on errors in quantum simulation of electronic structure.&rdquo; <span class="venue">Entropy</span> 2019. <a href="https://doi.org/10.3390/e21121218" target="_blank" rel="noreferrer">doi:10.3390/e21121218</a></li>
+    <li><span class="auth">F. Pedregosa, G. Varoquaux, A. Gramfort, et al.</span> &ldquo;Scikit-learn: Machine learning in Python.&rdquo; <span class="venue">Journal of Machine Learning Research</span> 2011.</li>
+    <li><span class="auth">S. B. Bravyi and A. Yu. Kitaev.</span> &ldquo;Fermionic quantum computation.&rdquo; <span class="venue">Annals of Physics</span> 2002. <a href="https://doi.org/10.1006/aphy.2002.6254" target="_blank" rel="noreferrer">doi:10.1006/aphy.2002.6254</a></li>
+    <li><span class="auth">J. D. Whitfield, J. Biamonte, and A. Aspuru-Guzik.</span> &ldquo;Simulation of electronic structure Hamiltonians using quantum computers.&rdquo; <span class="venue">Molecular Physics</span> 2011. <a href="https://doi.org/10.1080/00268976.2011.552441" target="_blank" rel="noreferrer">doi:10.1080/00268976.2011.552441</a></li>
+    <li><span class="auth">C. R. Harris, K. J. Millman, S. J. van der Walt, et al.</span> &ldquo;Array programming with NumPy.&rdquo; <span class="venue">Nature</span> 2020. <a href="https://doi.org/10.1038/s41586-020-2649-2" target="_blank" rel="noreferrer">doi:10.1038/s41586-020-2649-2</a></li>
+    <li><span class="auth">P. Virtanen, R. Gommers, T. E. Oliphant, et al.</span> &ldquo;SciPy 1.0: fundamental algorithms for scientific computing in Python.&rdquo; <span class="venue">Nature Methods</span> 2020. <a href="https://doi.org/10.1038/s41592-019-0686-2" target="_blank" rel="noreferrer">doi:10.1038/s41592-019-0686-2</a></li>
+    <li><span class="auth">A. A. Hagberg, D. A. Schult, and P. J. Swart.</span> &ldquo;Exploring network structure, dynamics, and function using NetworkX.&rdquo; <span class="venue">Proceedings of the 7th Python in Science Conference</span> 2008.</li>
+  </ol>
 </section>
 
 </main>
