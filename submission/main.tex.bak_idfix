@@ -89,12 +89,7 @@ upgrade for near-term quantum simulation.
 The simulation of quantum time evolution $e^{-\ii H t}$ is central to a wide array
 of fields, such as quantum chemistry, condensed-matter physics, and materials
 science, and is among the oldest and most promising applications of quantum
-computers~\cite{feynman1982simulating,lloyd1996universal,georgescu2014quantum,aspuru2005simulated}.
-Its appeal extends from quantum chemistry, where simulated time evolution underlies
-phase estimation of molecular
-energies~\cite{aspuru2005simulated,mcardle2020quantum}, to the first digital
-quantum simulations on trapped-ion and other near-term
-hardware~\cite{lanyon2011universal,smith2016manybody}. The workhorse primitive
+computers~\cite{feynman1982simulating,lloyd1996universal}. The workhorse primitive
 for this task is the product formula. Writing a Hamiltonian in its Pauli
 decomposition,
 \begin{equation}
@@ -111,36 +106,20 @@ The accuracy of this approximation is governed by the commutators of the summand
 the leading correction to a single step is
 $\tfrac{t^2}{2r}\sum_{a<b}[c_a P_a,\, c_b P_b]$, which vanishes for any pair of
 terms that commute~\cite{trotter1959product,suzuki1991general,childs2021theory}.
-The product-formula construction itself traces to the operator-splitting schemes of
-Strang~\cite{strang1968construction} and to Suzuki's fractal
-decompositions~\cite{suzuki1990fractal,suzuki1991general}, and it remains
-competitive with the more recent quantum-signal-processing and
-linear-combination-of-unitaries
-primitives~\cite{low2017optimal,low2019qubitization,berry2015taylor,childs2012hamiltonian}
-precisely because its cost scales with commutators rather than with a global norm.
 The modern, tight analysis of this error in terms of nested commutators provides
 the theoretical anchor of the present work~\cite{childs2021theory,childs2018toward}.
-This commutator-scaling viewpoint also explains why product formulas are nearly
-optimal for geometrically local lattice
-Hamiltonians~\cite{childs2019lattice,childs2010limitations}.
 
 A defining feature of the first-order formula is that its implementation cost is one
 rotation $e^{-\ii c_j P_j t/r}$ per term per step, so the gate count is $L\cdot r$
 \emph{independently} of the ordering $\pi$, while the error is not. The ordering is
 therefore a free knob, and a substantial body of empirical work has asked how much
-accuracy it can buy~\cite{tranter2019ordering,poulin2015trotter,hastings2015improving,wecker2015solving}.
-A parallel line of work has shown that the worst-case Trotter bound is often loose:
-errors from successive steps can interfere
-destructively~\cite{tran2020destructive,layden2022first}, are bounded by quantum
-localization for local observables~\cite{heyl2019quantum,sieberer2019digital}, and
-improve markedly on average over input
-states~\cite{chen2024averagecase,yi2022spectral}.
+accuracy it can buy~\cite{tranter2019ordering,poulin2015trotter,hastings2015improving}.
 The natural structure for this question is the \emph{commutator graph} (or
 anticommutation graph), with one node per term and an edge between every pair of
 terms that anticommute---the same graph used in measurement grouping for variational
 algorithms, where a clique cover into mutually commuting sets reduces the number of
 measurement
-settings~\cite{verteletskyi2020measurement,gokhale2020optimization,crawford2021efficient,yen2020measuring,jena2019pauli}.
+settings~\cite{verteletskyi2020measurement,gokhale2020optimization,crawford2021efficient}.
 Despite this rich structure, the empirical verdict has been consistently
 underwhelming: ordering heuristics move the error only marginally, and their gains
 are widely regarded as ``within noise.'' \emph{Why} a free parameter should be so
@@ -223,7 +202,11 @@ warm starts~\cite{huynh2026ostqaoa,huynh2026topoqaoa}. The present manuscript ca
 the same operator-spectral viewpoint from variational optimization to Hamiltonian
 simulation: the commutator error form is a matrix-free, edge-resolved truncation of
 the leading product-formula error on the commutator graph, and the matched-cost
-analysis reuses the query-budget discipline established in that line of work.
+analysis reuses the query-budget discipline established in that line of work. The
+same operator-spectral and spectral-truncation viewpoint connects this manuscript
+to companion studies of product-formula error--cost frontiers, structured-noise
+quantum error correction, and open-system and drift
+diagnostics~\cite{huynh2026lie,huynh2026gnndec,huynh2026topoqec,huynh2026covdec,huynh2026fiber,huynh2026cptppinn,huynh2026dsto,huynh2026drift}.
 
 % ============================================================
 \section{Commutator-graph scheduling}
@@ -864,26 +847,13 @@ we repurpose them for \emph{time evolution} and, beyond ordering, for scheduling
 sensitivity of Trotterized chemistry to term ordering has been reported
 empirically~\cite{tranter2019ordering,poulin2015trotter,hastings2015improving}, and the
 impotence theorem explains the ceiling those studies encounter. Symmetric (Strang) and
-higher-order product formulas are classical~\cite{strang1968construction,suzuki1990fractal,suzuki1991general,hatano2005finding},
-and randomized compilation---random permutation per step, qDRIFT, stochastic
-sparsification, randomized multi-product formulas, and composite channels---improves
-error scaling by averaging rather than
-cancellation~\cite{childs2019faster,campbell2019random,ouyang2020compilation,faehrmann2022randomizing,hagan2023composite};
-the antithetic schedule is the
+higher-order product formulas are classical~\cite{suzuki1991general,hatano2005finding},
+and randomized compilation---random permutation per step and qDRIFT---improves error
+scaling by averaging rather than
+cancellation~\cite{childs2019faster,campbell2019random}; the antithetic schedule is the
 \emph{deterministic, zero-variance} counterpart that cancels the same leading term in a
 single sample, and our matched-cost frontier places it against both the first-order and
-the randomized baselines. A complementary deterministic route reduces the leading
-error by taking linear combinations of Trotter circuits---multi-product
-formulas~\cite{zhuk2024trotter}---at the cost of ancillas or postselection, whereas
-the antithetic schedule pays no such overhead. Beyond product formulas, query-optimal
-primitives based on linear combinations of unitaries, truncated Taylor series,
-quantum signal processing, and qubitization achieve logarithmic precision
-scaling~\cite{berry2007efficient,berry2015taylor,berry2015nearly,low2017optimal,low2019qubitization},
-and refined input- and observable-dependent analyses tighten the cost
-further~\cite{an2021time,kivlichan2017bounding}; these target the
-fault-tolerant regime, while CGS is a near-term, zero-overhead upgrade. Hardware-aware
-compilations such as the fermionic-swap network reduce circuit depth for the same
-Trotter step~\cite{kivlichan2018quantum}. The tight commutator-scaling theory of Trotter
+the randomized baselines. The tight commutator-scaling theory of Trotter
 error~\cite{childs2021theory,childs2018toward} is the lens throughout, and the
 commutator error form is its explicit, matrix-free, ordering-resolved representation.
 
@@ -962,7 +932,7 @@ $H=\sum_i(J_x X_iX_{i+1}+J_y Y_iY_{i+1}+J_z Z_iZ_{i+1})$; and \emph{molecular-li
 random local two-body Pauli terms with seeded Gaussian coefficients---a tractable
 stand-in for the dense, irregular anticommutation structure of Jordan--Wigner /
 Bravyi--Kitaev mapped electronic-structure
-Hamiltonians~\cite{bravyi2002fermionic,whitfield2011simulation,jordan1928paulische,seeley2012bravyi,tranter2015bravyi,babbush2016exponentially}. The reported-scale
+Hamiltonians~\cite{bravyi2002fermionic,whitfield2011simulation}. The reported-scale
 configuration (\texttt{configs/full.yaml}) uses sizes $n\in\{4,6,8,10,12,14\}$, eight
 seeded instances per (family, size), evolution time $t=\EvolTime$, a reference budget
 of $r=\RefSteps$ steps, and a step grid $\{1,2,4,6,8,12,16,24\}$ for the convergence
@@ -1181,267 +1151,23 @@ Aric~A. Hagberg, Daniel~A. Schult, and Pieter~J. Swart.
 \newblock In \emph{Proceedings of the 7th Python in Science Conference}, pages
   11--15, 2008.
 
-\bibitem{georgescu2014quantum}
-I.~M. Georgescu, S.~Ashhab, and Franco Nori.
-\newblock Quantum simulation.
-\newblock \emph{Reviews of Modern Physics}, 86\penalty0 (1):\penalty0 153--185,
-  2014.
-\newblock \doi{10.1103/RevModPhys.86.153}.
-
-\bibitem{aspuru2005simulated}
-Al{\'a}n Aspuru-Guzik, Anthony~D. Dutoi, Peter~J. Love, and Martin Head-Gordon.
-\newblock Simulated quantum computation of molecular energies.
-\newblock \emph{Science}, 309\penalty0 (5741):\penalty0 1704--1707, 2005.
-\newblock \doi{10.1126/science.1113479}.
-
-\bibitem{mcardle2020quantum}
-Sam McArdle, Suguru Endo, Al{\'a}n Aspuru-Guzik, Simon~C. Benjamin, and Xiao
-  Yuan.
-\newblock Quantum computational chemistry.
-\newblock \emph{Reviews of Modern Physics}, 92\penalty0 (1):\penalty0 015003,
-  2020.
-\newblock \doi{10.1103/RevModPhys.92.015003}.
-
-\bibitem{lanyon2011universal}
-B.~P. Lanyon, C.~Hempel, D.~Nigg, M.~M{\"u}ller, R.~Gerritsma, F.~Z{\"a}hringer,
-  P.~Schindler, J.~T. Barreiro, M.~Rambach, G.~Kirchmair, M.~Hennrich,
-  P.~Zoller, R.~Blatt, and C.~F. Roos.
-\newblock Universal digital quantum simulation with trapped ions.
-\newblock \emph{Science}, 334\penalty0 (6052):\penalty0 57--61, 2011.
-\newblock \doi{10.1126/science.1208001}.
-
-\bibitem{smith2016manybody}
-J.~Smith, A.~Lee, P.~Richerme, B.~Neyenhuis, P.~W. Hess, P.~Hauke, M.~Heyl,
-  D.~A. Huse, and C.~Monroe.
-\newblock Many-body localization in a quantum simulator with programmable random
-  disorder.
-\newblock \emph{Nature Physics}, 12\penalty0 (10):\penalty0 907--911, 2016.
-\newblock \doi{10.1038/nphys3783}.
-
-\bibitem{strang1968construction}
-Gilbert Strang.
-\newblock On the construction and comparison of difference schemes.
-\newblock \emph{SIAM Journal on Numerical Analysis}, 5\penalty0 (3):\penalty0
-  506--517, 1968.
-\newblock \doi{10.1137/0705041}.
-
-\bibitem{suzuki1990fractal}
-Masuo Suzuki.
-\newblock Fractal decomposition of exponential operators with applications to
-  many-body theories and Monte Carlo simulations.
-\newblock \emph{Physics Letters A}, 146\penalty0 (6):\penalty0 319--323, 1990.
-\newblock \doi{10.1016/0375-9601(90)90962-N}.
-
-\bibitem{berry2007efficient}
-Dominic~W. Berry, Graeme Ahokas, Richard Cleve, and Barry~C. Sanders.
-\newblock Efficient quantum algorithms for simulating sparse Hamiltonians.
-\newblock \emph{Communications in Mathematical Physics}, 270\penalty0
-  (2):\penalty0 359--371, 2007.
-\newblock \doi{10.1007/s00220-006-0150-x}.
-
-\bibitem{childs2012hamiltonian}
-Andrew~M. Childs and Nathan Wiebe.
-\newblock Hamiltonian simulation using linear combinations of unitary
-  operations.
-\newblock \emph{Quantum Information \& Computation}, 12\penalty0
-  (11--12):\penalty0 901--924, 2012.
-
-\bibitem{childs2010limitations}
-Andrew~M. Childs and Robin Kothari.
-\newblock Limitations on the simulation of non-sparse Hamiltonians.
-\newblock \emph{Quantum Information \& Computation}, 10\penalty0
-  (7--8):\penalty0 669--684, 2010.
-
-\bibitem{berry2015taylor}
-Dominic~W. Berry, Andrew~M. Childs, Richard Cleve, Robin Kothari, and Rolando~D.
-  Somma.
-\newblock Simulating Hamiltonian dynamics with a truncated Taylor series.
-\newblock \emph{Physical Review Letters}, 114\penalty0 (9):\penalty0 090502,
-  2015.
-\newblock \doi{10.1103/PhysRevLett.114.090502}.
-
-\bibitem{berry2015nearly}
-Dominic~W. Berry, Andrew~M. Childs, and Robin Kothari.
-\newblock Hamiltonian simulation with nearly optimal dependence on all
-  parameters.
-\newblock In \emph{2015 IEEE 56th Annual Symposium on Foundations of Computer
-  Science (FOCS)}, pages 792--809. IEEE, 2015.
-\newblock \doi{10.1109/FOCS.2015.54}.
-
-\bibitem{low2017optimal}
-Guang~Hao Low and Isaac~L. Chuang.
-\newblock Optimal Hamiltonian simulation by quantum signal processing.
-\newblock \emph{Physical Review Letters}, 118\penalty0 (1):\penalty0 010501,
-  2017.
-\newblock \doi{10.1103/PhysRevLett.118.010501}.
-
-\bibitem{low2019qubitization}
-Guang~Hao Low and Isaac~L. Chuang.
-\newblock Hamiltonian simulation by qubitization.
-\newblock \emph{Quantum}, 3:\penalty0 163, 2019.
-\newblock \doi{10.22331/q-2019-07-12-163}.
-
-\bibitem{childs2019lattice}
-Andrew~M. Childs and Yuan Su.
-\newblock Nearly optimal lattice simulation by product formulas.
-\newblock \emph{Physical Review Letters}, 123\penalty0 (5):\penalty0 050503,
-  2019.
-\newblock \doi{10.1103/PhysRevLett.123.050503}.
-
-\bibitem{tran2020destructive}
-Minh~C. Tran, Su-Kuan Chu, Yuan Su, Andrew~M. Childs, and Alexey~V. Gorshkov.
-\newblock Destructive error interference in product-formula lattice simulation.
-\newblock \emph{Physical Review Letters}, 124\penalty0 (22):\penalty0 220502,
-  2020.
-\newblock \doi{10.1103/PhysRevLett.124.220502}.
-
-\bibitem{layden2022first}
-David Layden.
-\newblock First-order Trotter error from a second-order perspective.
-\newblock \emph{Physical Review Letters}, 128\penalty0 (21):\penalty0 210501,
-  2022.
-\newblock \doi{10.1103/PhysRevLett.128.210501}.
-
-\bibitem{yi2022spectral}
-Changhao Yi and Elizabeth Crosson.
-\newblock Spectral analysis of product formulas for quantum simulation.
-\newblock \emph{npj Quantum Information}, 8\penalty0 (1):\penalty0 37, 2022.
-\newblock \doi{10.1038/s41534-022-00548-w}.
-
-\bibitem{chen2024averagecase}
-Chi-Fang Chen and Fernando G.~S.~L. Brand{\~a}o.
-\newblock Average-case speedup for product formulas.
-\newblock \emph{Communications in Mathematical Physics}, 405\penalty0
-  (2):\penalty0 32, 2024.
-\newblock \doi{10.1007/s00220-023-04912-5}.
-
-\bibitem{heyl2019quantum}
-Markus Heyl, Philipp Hauke, and Peter Zoller.
-\newblock Quantum localization bounds Trotter errors in digital quantum
-  simulation.
-\newblock \emph{Science Advances}, 5\penalty0 (4):\penalty0 eaau8342, 2019.
-\newblock \doi{10.1126/sciadv.aau8342}.
-
-\bibitem{sieberer2019digital}
-L.~M. Sieberer, T.~Olsacher, A.~Elben, M.~Heyl, P.~Hauke, F.~Haake, and
-  P.~Zoller.
-\newblock Digital quantum simulation, Trotter errors, and quantum chaos of the
-  kicked top.
-\newblock \emph{npj Quantum Information}, 5\penalty0 (1):\penalty0 78, 2019.
-\newblock \doi{10.1038/s41534-019-0192-5}.
-
-\bibitem{ouyang2020compilation}
-Yingkai Ouyang, David~R. White, and Earl~T. Campbell.
-\newblock Compilation by stochastic Hamiltonian sparsification.
-\newblock \emph{Quantum}, 4:\penalty0 235, 2020.
-\newblock \doi{10.22331/q-2020-02-27-235}.
-
-\bibitem{faehrmann2022randomizing}
-Paul~K. Faehrmann, Mark Steudtner, Richard Kueng, Maria Kiefer{\'o}v{\'a}, and
-  Jens Eisert.
-\newblock Randomizing multi-product formulas for Hamiltonian simulation.
-\newblock \emph{Quantum}, 6:\penalty0 806, 2022.
-\newblock \doi{10.22331/q-2022-09-19-806}.
-
-\bibitem{zhuk2024trotter}
-Sergiy Zhuk, Niall Robertson, and Sergey Bravyi.
-\newblock Trotter error bounds and dynamic multi-product formulas for
-  Hamiltonian simulation.
-\newblock \emph{Physical Review Research}, 6\penalty0 (3):\penalty0 033309,
-  2024.
-\newblock \doi{10.1103/PhysRevResearch.6.033309}.
-
-\bibitem{hagan2023composite}
-Matthew Hagan and Nathan Wiebe.
-\newblock Composite quantum simulations.
-\newblock \emph{Quantum}, 7:\penalty0 1181, 2023.
-\newblock \doi{10.22331/q-2023-11-14-1181}.
-
-\bibitem{an2021time}
-Dong An, Di~Fang, and Lin Lin.
-\newblock Time-dependent unbounded Hamiltonian simulation with vector norm
-  scaling.
-\newblock \emph{Quantum}, 5:\penalty0 459, 2021.
-\newblock \doi{10.22331/q-2021-05-26-459}.
-
-\bibitem{wecker2015solving}
-Dave Wecker, Matthew~B. Hastings, Nathan Wiebe, Bryan~K. Clark, Chetan Nayak,
-  and Matthias Troyer.
-\newblock Solving strongly correlated electron models on a quantum computer.
-\newblock \emph{Physical Review A}, 92\penalty0 (6):\penalty0 062318, 2015.
-\newblock \doi{10.1103/PhysRevA.92.062318}.
-
-\bibitem{babbush2016exponentially}
-Ryan Babbush, Dominic~W. Berry, Ian~D. Kivlichan, Annie~Y. Wei, Peter~J. Love,
-  and Al{\'a}n Aspuru-Guzik.
-\newblock Exponentially more precise quantum simulation of fermions in second
-  quantization.
-\newblock \emph{New Journal of Physics}, 18\penalty0 (3):\penalty0 033032,
-  2016.
-\newblock \doi{10.1088/1367-2630/18/3/033032}.
-
-\bibitem{kivlichan2018quantum}
-Ian~D. Kivlichan, Jarrod McClean, Nathan Wiebe, Craig Gidney, Al{\'a}n
-  Aspuru-Guzik, Garnet Kin-Lic Chan, and Ryan Babbush.
-\newblock Quantum simulation of electronic structure with linear depth and
-  connectivity.
-\newblock \emph{Physical Review Letters}, 120\penalty0 (11):\penalty0 110501,
-  2018.
-\newblock \doi{10.1103/PhysRevLett.120.110501}.
-
-\bibitem{kivlichan2017bounding}
-Ian~D. Kivlichan, Nathan Wiebe, Ryan Babbush, and Al{\'a}n Aspuru-Guzik.
-\newblock Bounding the costs of quantum simulation of many-body physics in real
-  space.
-\newblock \emph{Journal of Physics A: Mathematical and Theoretical},
-  50\penalty0 (30):\penalty0 305301, 2017.
-\newblock \doi{10.1088/1751-8121/aa77b8}.
-
-\bibitem{jordan1928paulische}
-Pascual Jordan and Eugene Wigner.
-\newblock {\"U}ber das Paulische {\"A}quivalenzverbot.
-\newblock \emph{Zeitschrift f{\"u}r Physik}, 47\penalty0 (9--10):\penalty0
-  631--651, 1928.
-\newblock \doi{10.1007/BF01331938}.
-
-\bibitem{seeley2012bravyi}
-Jacob~T. Seeley, Martin~J. Richard, and Peter~J. Love.
-\newblock The Bravyi-Kitaev transformation for quantum computation of electronic
-  structure.
-\newblock \emph{The Journal of Chemical Physics}, 137\penalty0 (22):\penalty0
-  224109, 2012.
-\newblock \doi{10.1063/1.4768229}.
-
-\bibitem{tranter2015bravyi}
-Andrew Tranter, Sarah Sofia, Jake Seeley, Michael Kaicher, Jarrod McClean, Ryan
-  Babbush, Peter~V. Coveney, Florian Mintert, Frank Wilhelm, and Peter~J. Love.
-\newblock The Bravyi-Kitaev transformation: Properties and applications.
-\newblock \emph{International Journal of Quantum Chemistry}, 115\penalty0
-  (19):\penalty0 1431--1441, 2015.
-\newblock \doi{10.1002/qua.24969}.
-
-\bibitem{yen2020measuring}
-Tzu-Ching Yen, Vladyslav Verteletskyi, and Artur~F. Izmaylov.
-\newblock Measuring all compatible operators in one series of single-qubit
-  measurements using unitary transformations.
-\newblock \emph{Journal of Chemical Theory and Computation}, 16\penalty0
-  (4):\penalty0 2400--2409, 2020.
-\newblock \doi{10.1021/acs.jctc.0c00008}.
-
-\bibitem{jena2019pauli}
-Andrew Jena, Scott Genin, and Michele Mosca.
-\newblock Pauli partitioning with respect to gate sets.
-\newblock \emph{arXiv preprint arXiv:1907.07859}, 2019.
-
 \bibitem{huynh2026gctr} M.~Huynh. Query-Efficient Quantum Approximate Optimization via Graph-Conditioned Trust Regions. arXiv:2604.24803 (2026).
-\bibitem{huynh2026gctrcal} M.~Huynh. Graph-conditioned trust regions for uncertainty-calibrated quantum approximate optimization. Manuscript in preparation (2026).
-\bibitem{huynh2026gctrcalpro} M.~Huynh. Graph-conditioned trust regions for uncertainty-calibrated quantum approximate optimization (extended). Manuscript in preparation (2026).
-\bibitem{huynh2026meascost} M.~Huynh. The measurement cost of warm-started low-depth QAOA. Manuscript in preparation (2026).
-\bibitem{huynh2026certqb} M.~Huynh. Certified query budgets for the quantum approximate optimization algorithm. Manuscript in preparation (2026).
-\bibitem{huynh2026paramxfer} M.~Huynh. Topology-Conditioned QAOA Parameter Transfer for Budgeted Graph Optimization. Manuscript in preparation (2026).
-\bibitem{huynh2026paramxferB} M.~Huynh. Topology-Conditioned QAOA Parameter Transfer for Budgeted Graph Optimization (companion). Manuscript in preparation (2026).
-\bibitem{huynh2026ostqaoa} M.~Huynh. Operator-Spectral Truncated Priors for Query-Efficient QAOA Parameter Search. Manuscript in preparation (2026).
-\bibitem{huynh2026topoqaoa} M.~Huynh. Spectral-truncation graph kernels for QAOA warm starts: topology-conditioned schedule transfer beyond depth one. Manuscript in preparation (2026).
+\bibitem{huynh2026gctrcal} M.~Huynh. Graph-conditioned trust regions for uncertainty-calibrated quantum approximate optimization. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026gctrcalpro} M.~Huynh. Graph-conditioned trust regions for uncertainty-calibrated quantum approximate optimization (extended). arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026meascost} M.~Huynh. The measurement cost of warm-started low-depth QAOA. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026certqb} M.~Huynh. Certified query budgets for the quantum approximate optimization algorithm. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026paramxfer} M.~Huynh. Topology-Conditioned QAOA Parameter Transfer for Budgeted Graph Optimization. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026paramxferB} M.~Huynh. Topology-Conditioned QAOA Parameter Transfer for Budgeted Graph Optimization (companion). arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026ostqaoa} M.~Huynh. Operator-Spectral Truncated Priors for Query-Efficient QAOA Parameter Search. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026topoqaoa} M.~Huynh. Spectral-truncation graph kernels for QAOA warm starts: topology-conditioned schedule transfer beyond depth one. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026lie} M.~Huynh. Advancing the product-formula error--cost frontier with a Lie-algebraic spectral truncation of the residual. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026gnndec} M.~Huynh. Learning to decode correlated quantum errors: a topological graph neural decoder that surpasses minimum-weight matching under structured circuit-level noise. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026topoqec} M.~Huynh. Transfer-Operator Decoding of Structured Noise in Quantum Error Correction. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026covdec} M.~Huynh. Covariance-aware hybrid decoding of surface codes under spatially and temporally correlated noise. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026fiber} M.~Huynh. Syndrome fiber bundle: Gauge-equivariant neural decoding with calibrated uncertainty for correlated quantum noise. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026cptppinn} M.~Huynh. Structure-preserving physics-informed learning of open quantum dynamics with spectral-frame encodings and operator-system truncation. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026dsto} M.~Huynh. Directed spectral-truncated operators for inductive classification of quantum phases across a control-parameter sweep. arXiv:2026.XXXXX (2026).
+\bibitem{huynh2026drift} M.~Huynh. Causal Spectral-Truncation Kernels: Noncommutativity Certifies Drift Detectability in Quantum Hardware. arXiv:2026.XXXXX (2026).
 
 \end{thebibliography}
 
