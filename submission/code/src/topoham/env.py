@@ -33,6 +33,23 @@ from . import metrics, pauli
 from .hamiltonians import Hamiltonian
 
 
+def _popcount(x: np.ndarray) -> np.ndarray:
+    """Per-element population count for a non-negative int64 array.
+
+    ``np.bitwise_count`` only exists in NumPy >= 2.0; this SWAR fallback gives
+    identical results on any supported NumPy (>= 1.24). Used to compute the Pauli
+    ``Z``-string parity :math:`(-1)^{\\text{popcount}(x)}` when assembling the
+    matrix-free sparse Hamiltonian.
+    """
+    if hasattr(np, "bitwise_count"):
+        return np.bitwise_count(x)
+    x = x.astype(np.int64, copy=True)
+    x = x - ((x >> 1) & 0x5555555555555555)
+    x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333)
+    x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0F
+    return (x * 0x0101010101010101) >> 56
+
+
 # ---------------------------------------------------------------------------
 # Exact / reference evolution
 # ---------------------------------------------------------------------------
@@ -78,7 +95,7 @@ def sparse_pauli_matrix(p: str) -> sp.csr_matrix:
             zy |= bit
     cols = np.arange(dim, dtype=np.int64)
     rows = cols ^ flip
-    parity = np.bitwise_count(cols & zy) & 1
+    parity = _popcount(cols & zy) & 1
     vals = ((1j) ** n_y) * np.where(parity == 0, 1.0, -1.0)
     return sp.csr_matrix((vals, (rows, cols)), shape=(dim, dim))
 
