@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beyond Term Ordering: Commutator-Graph Schedules for First-Order Trotterization</title>
-<meta name="description" content="A single term ordering is provably impotent for first-order Trotterization; a step-alternating antithetic schedule cancels the leading commutator error and converges at second order at the identical gate budget. Quantified against exact statevector references on 120 structured Hamiltonians, with an in-browser convergence-rate demonstration.">
+<title>Zero-Overhead Cancellation of the Leading Trotter Error via Commutator-Graph Scheduling</title>
+<meta name="description" content="A single term ordering is provably impotent for first-order Trotterization; a step-alternating antithetic schedule cancels the leading commutator error and converges at second order at the identical gate budget. Quantified against exact statevector references on 144 structured Hamiltonians up to 14 qubits, with an in-browser convergence-rate demonstration.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}]})"></script>
@@ -113,24 +113,25 @@
   <a href="#results">Results</a>
   <a href="#demo">Demo</a>
   <a href="#repro">Reproducibility</a>
+  <a href="#cite">Cite</a>
   <a href="#references">References</a>
 </div></nav>
 
 <header class="hero">
   <div class="wrap">
     <span class="tag">Quantum simulation · Product formulas · Matched-cost, exact-reference evaluation</span>
-    <h1>Beyond Term Ordering: Commutator-Graph Schedules Cancel the Leading Trotter Error at a Fixed Gate Budget</h1>
+    <h1>Zero-Overhead Cancellation of the Leading Trotter Error via Commutator-Graph Scheduling</h1>
     <p class="sub">In a first-order Lie&ndash;Trotter product formula the order of the Pauli terms is free at fixed gate cost. We prove that a single ordering is <em>impotent</em>&mdash;it only re-signs the leading commutator error and cannot escape the $O(t^2/r)$ rate&mdash;and that the lever which does matter is the per-step <em>schedule</em>: a step-alternating <em>antithetic</em> schedule cancels the leading error and converges at second order, $O(t^3/r^2)$, at the <em>identical</em> $L\!\cdot\!r$ rotation count.</p>
-    <p class="auth">Molena Huynh &middot; North Carolina State University &middot; <a href="mailto:molena.huynh@jmp.com">molena.huynh@jmp.com</a><br>manuscript prepared for <em>Nature Machine Intelligence</em><br>part of a unified graph-learning program for quantum computation</p>
+    <p class="auth">Molena Huynh &middot; North Carolina State University, Raleigh, North Carolina 27695, USA &middot; <a href="mailto:molena.huynh@jmp.com">molena.huynh@jmp.com</a><br>manuscript prepared for <em>Physical Review Research</em><br>part of the spectral-truncation operators (SpecOps) program for quantum computation</p>
     <div class="chips">
       <div class="chip"><b>2 &rarr; 4</b><span>convergence order, same gate budget</span></div>
-      <div class="chip"><b>1.62&times;</b><span>fewer rotations to fidelity 0.99</span></div>
+      <div class="chip"><b>1.40&times;</b><span>fewer rotations to fidelity 0.99</span></div>
       <div class="chip"><b>0.999</b><span>reached by schedules; first-order does not</span></div>
-      <div class="chip"><b>120</b><span>structured instances, 4&ndash;8 qubits</span></div>
+      <div class="chip"><b>144</b><span>structured instances, 4&ndash;14 qubits</span></div>
     </div>
     <div class="cta">
-      <a class="btn primary" href="#demo">Interactive convergence demo</a>
-      <a class="btn" href="https://thmolena.github.io/Topological-Graph-for-Hamiltonian-Simulation/submission/main.pdf">Manuscript (PDF)</a>
+      <a class="btn primary" href="https://thmolena.github.io/Topological-Graph-for-Hamiltonian-Simulation/submission/main.pdf">Read the manuscript (PDF)</a>
+      <a class="btn" href="#demo">Interactive convergence demo</a>
       <a class="btn" href="#repro">Reproduce</a>
     </div>
   </div>
@@ -139,8 +140,8 @@
 <main class="wrap">
 
 <div style="margin:26px 0 6px;padding:18px 20px;border:1px solid rgba(127,140,170,.32);border-left:4px solid var(--accent,#1f6feb);border-radius:8px;background:rgba(127,140,170,.06);">
-  <strong style="display:block;font-size:.74rem;letter-spacing:.13em;text-transform:uppercase;color:var(--accent,#1f6feb);margin-bottom:7px;">AI for quantum, at HPC scale</strong>
-  <p style="margin:0;font-size:1.02rem;line-height:1.6;">A learned, interpretable policy &mdash; logistic regression over ten commutator-graph features, <strong>85%</strong> leave-one-out accuracy &mdash; selects the gate-optimal schedule per instance and recovers near-oracle efficiency, reaching a target fidelity in <strong>1.62&times; fewer</strong> two-qubit rotations at zero extra gate cost. The statevector references behind every number are exactly the workload GPU backends (NVIDIA cuQuantum / cuStateVec) accelerate, and one seeded command regenerates the entire 120-instance study.</p>
+  <strong style="display:block;font-size:.74rem;letter-spacing:.13em;text-transform:uppercase;color:var(--accent,#1f6feb);margin-bottom:7px;">Abstract</strong>
+  <p style="margin:0;font-size:1.02rem;line-height:1.6;">A quantum computer is a stochastic device: the Born rule returns one bitstring per run, so every quantity a simulation reports is a statistical estimate whose structure is governed by the algebra of the operators being evolved. We introduce <strong>commutator-graph scheduling (CGS)</strong>, which doubles the convergence order of first-order Trotterization at zero gate, qubit, or depth overhead by making the leading error an explicit, estimable operator on that algebra. We recast the leading Trotter error as an exact, matrix-free operator&mdash;the <em>commutator error form</em> $E_\pi=\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]$, a signed sum of Pauli strings over the edges of the commutator graph, validated against dense exponentials to $10^{-9}$&mdash;and prove that reordering only re-signs $E_\pi$, leaving its norm exactly invariant on collision-free families, so no fixed ordering escapes the $O(t^2/r)$ rate. The genuine free parameter is the per-step <em>schedule</em>: a step-alternating <em>antithetic</em> schedule cancels $E_\pi$ and converges at $O(t^3/r^2)$ with the identical $L\!\cdot\!r$ rotations. Across <strong>144</strong> structured Hamiltonians against exact statevector references, CGS lifts the empirical rate from <strong>1.96</strong> to <strong>4.07</strong>, reaches fidelity $0.99$ with <strong>1.40&times;</strong> fewer rotations, and attains $0.999$ where first-order Trotter cannot. A matrix-free Krylov reference extends the exact benchmark to <strong>14</strong> qubits, where the order doubling is size-independent and the matched-cost speedup reaches <strong>2.06&times;</strong>. An interpretable scheduler over ten graph features selects the gate-optimal schedule per instance with <strong>93%</strong> leave-one-out accuracy.</p>
 </div>
 
 <section id="background">
@@ -173,10 +174,12 @@
 <section id="contrib">
   <h2>Principal Contributions</h2>
   <ul class="contrib">
-    <li><strong>The commutator error form, matrix-free and certified.</strong> The exact leading-order error operator $E_\pi=\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]$ is assembled in $O(L^2 n)$ as a signed sum of Pauli strings over the commutator graph, validated against the dense pair-commutator sum to $10^{-9}$.</li>
-    <li><strong>An ordering-impotence theorem.</strong> Reordering only re-signs $E_\pi$; its Hilbert&ndash;Schmidt norm is exactly ordering-invariant when the edge commutators are distinct, and within a factor 1.085 of its floor otherwise across the 120 instances. No fixed ordering escapes the first-order rate&mdash;the precise form of the &ldquo;ordering is within noise&rdquo; folklore.</li>
-    <li><strong>A free second-order schedule.</strong> The antithetic schedule cancels $E_\pi$ and converges at second order at the identical gate budget; combined with the commuting-clique compression of the graph it reaches a target fidelity at 1.62&times; fewer rotations and reaches 0.999 where first-order Trotter does not.</li>
-    <li><strong>A learned schedule router.</strong> An interpretable logistic-regression router over ten commutator-graph features selects the gate-optimal schedule per instance with 85% leave-one-instance-out accuracy, recovering near-oracle gate efficiency by folding only the instances that need it.</li>
+    <li><strong>The commutator error form, matrix-free and certified.</strong> The exact leading-order error operator $E_\pi=\sum_{a<b}[h_{\pi(a)},h_{\pi(b)}]$ is assembled in $O(L^2 n)$ as a signed sum of Pauli strings over the commutator graph, without ever forming a $2^n\!\times\!2^n$ matrix, and validated against the dense pair-commutator sum to $10^{-9}$.</li>
+    <li><strong>An ordering-impotence theorem.</strong> Reordering only re-signs $E_\pi$; its Hilbert&ndash;Schmidt norm is exactly ordering-invariant when the edge commutators are distinct, and only a small colliding fraction is ordering-reducible otherwise. Across the 144 instances a median ordering sits within a factor 1.097 of the exact floor. No fixed ordering escapes the first-order rate&mdash;the precise form of the &ldquo;ordering is within noise&rdquo; folklore.</li>
+    <li><strong>A free second-order schedule.</strong> The antithetic schedule cancels $E_\pi$ and converges at second order at the identical gate budget; combined with the commuting-clique compression of the graph it reaches fidelity $0.99$ at 1.40&times; fewer rotations and reaches $0.999$ where first-order Trotter does not.</li>
+    <li><strong>A quantitative theory of the residual.</strong> A self-contained Baker&ndash;Campbell&ndash;Hausdorff / Magnus remainder bounds the post-cancellation error in operator norm; leading-cancellation is proved strictly more accurate than every fixed ordering at fine step size; residual minimization is placed in an NP-hard landscape with a spectral relaxation; and an unbiased shot-based estimator with a finite-sample confidence interval makes the accuracy claim empirically certifiable, not merely asymptotic.</li>
+    <li><strong>Size-independent verification.</strong> A matrix-free Krylov reference extends the exact benchmark from the dense-exponential ceiling to 14 qubits; the order doubling (first-order rate $\approx2$, antithetic rate $\approx4$) and the matched-cost speedup (2.06&times; at $n=14$) are size-independent.</li>
+    <li><strong>A learned schedule router.</strong> An interpretable logistic-regression router over ten listing-order-invariant commutator-graph features selects the gate-optimal schedule per instance with 93% leave-one-instance-out accuracy, recovering near-oracle gate efficiency by folding only the instances that need it.</li>
   </ul>
 </section>
 
@@ -207,43 +210,42 @@
 
 <section id="results">
   <h2>Empirical Validation</h2>
-  <p class="lead">Across 120 structured instances (transverse-field Ising, Heisenberg, random molecular-like; $n\in\{4,\dots,8\}$ qubits; eight seeded draws each) against exact statevector references. Every value is generated by the package and transcribed from <code>results/summary.json</code>.</p>
+  <p class="lead">Across 144 structured instances (transverse-field Ising, Heisenberg, random molecular-like; $n\in\{4,6,8,10,12,14\}$ qubits; eight seeded draws each) against exact statevector references. Every value is generated by the package and transcribed from <code>results/summary.json</code>.</p>
 
   <h3 style="margin:0 0 8px">Matched-cost snapshot at a reference budget</h3>
-  <p class="note" style="margin:0 0 12px">At $r=6$ Trotter steps ($t=1.0$). The first-order schedules share the identical 76-rotation budget; the antithetic fold matches it and still reaches higher fidelity. &ldquo;rate $p$&rdquo; is the fitted convergence exponent (mean per-instance log&ndash;log slope of infidelity vs.&nbsp;$r$).</p>
+  <p class="note" style="margin:0 0 12px">At $r=6$ Trotter steps ($t=1.0$), a mean of 118 rotations. The first-order schedules share this identical budget; the antithetic fold matches it and still reaches higher fidelity. &ldquo;rate $p$&rdquo; is the fitted convergence exponent (mean per-instance log&ndash;log slope of infidelity vs.&nbsp;$r$).</p>
   <div class="tablewrap"><table>
-    <thead><tr><th>schedule</th><th>order</th><th>fidelity</th><th>&plusmn;95% CI</th><th>rotations</th><th>rate $p$</th></tr></thead>
+    <thead><tr><th>schedule</th><th>order</th><th>fidelity</th><th>rotations</th><th>rate $p$</th></tr></thead>
     <tbody>
-      <tr><td>random (1st order)</td><td>1st</td><td>0.9149</td><td>0.0131</td><td>76</td><td>1.99</td></tr>
-      <tr><td>coefficient (1st order)</td><td>1st</td><td>0.9636</td><td>0.0075</td><td>76</td><td>1.97</td></tr>
-      <tr><td>clique (1st order)</td><td>1st</td><td>0.9650</td><td>0.0073</td><td>76</td><td>2.03</td></tr>
-      <tr><td><strong>antithetic (2nd, free)</strong></td><td>2nd</td><td class="best">0.9806</td><td>0.0062</td><td>76</td><td class="best">4.07</td></tr>
-      <tr><td>symmetric (2nd, Strang)</td><td>2nd</td><td>0.9989</td><td>0.0003</td><td>141</td><td>4.03</td></tr>
+      <tr><td>best first-order ordering</td><td>1st</td><td>0.9403</td><td>118</td><td>1.96</td></tr>
+      <tr><td><strong>antithetic (2nd, free)</strong></td><td>2nd</td><td class="best">0.9589</td><td>118</td><td class="best">4.07</td></tr>
+      <tr><td>symmetric (2nd, Strang)</td><td>2nd</td><td>&mdash;</td><td>&mdash;</td><td>4.03</td></tr>
     </tbody>
   </table></div>
-  <p class="note">At the identical 76-rotation budget the antithetic schedule reaches mean fidelity 0.9806 against 0.9636 for the best first-order ordering&mdash;a reduction of mean infidelity from 0.0364 to 0.0194 (a factor 1.9), for free. The rate column shows the same effect as a convergence exponent: $\approx2$ for every first-order schedule and $\approx4$ for both folds.</p>
+  <p class="note">At the identical 118-rotation budget the antithetic schedule reaches mean fidelity 0.9589 against 0.9403 for the best first-order ordering&mdash;a reduction of mean infidelity from 0.0597 to 0.0411 (a factor 1.5), for free. The rate column shows the same effect as a convergence exponent: $\approx2$ for every first-order schedule and $\approx4$ for both folds&mdash;a clean doubling of the convergence order.</p>
 
   <h3 style="margin:26px 0 8px">Rotations to a target fidelity <span class="badge">matched-cost efficiency</span></h3>
-  <p class="note" style="margin:0 0 12px">Realised rotation count at which the mean fidelity over the 120 instances first reaches each target; &ldquo;&mdash;&rdquo; marks a target not reached within the swept step grid.</p>
+  <p class="note" style="margin:0 0 12px">Realised rotation count at which the mean fidelity over the 144 instances first reaches each target; &ldquo;&mdash;&rdquo; marks a target not reached within the swept step grid.</p>
   <div class="tablewrap"><table>
-    <thead><tr><th>schedule</th><th>$F\!\ge\!0.9$</th><th>$F\!\ge\!0.99$</th><th>$F\!\ge\!0.999$</th></tr></thead>
+    <thead><tr><th>schedule</th><th>$F\!\ge\!0.99$</th><th>$F\!\ge\!0.999$</th></tr></thead>
     <tbody>
-      <tr><td>random (1st order)</td><td>76</td><td>304</td><td>&mdash;</td></tr>
-      <tr><td>coefficient (1st order)</td><td>51</td><td>152</td><td>&mdash;</td></tr>
-      <tr><td>clique (1st order)</td><td>51</td><td>152</td><td>&mdash;</td></tr>
-      <tr><td><strong>antithetic (2nd, free)</strong></td><td>76</td><td class="best">101</td><td class="best">203</td></tr>
-      <tr><td>symmetric (2nd, Strang)</td><td>94</td><td>94</td><td>188</td></tr>
+      <tr><td>best first-order ordering</td><td>315</td><td>&mdash;</td></tr>
+      <tr><td><strong>antithetic (2nd, free)</strong></td><td class="best">236</td><td class="best">315</td></tr>
+      <tr><td>symmetric (2nd, Strang)</td><td>225</td><td>300</td></tr>
     </tbody>
   </table></div>
-  <p class="note">To reach fidelity 0.99 the best first-order ordering needs 152 rotations and the folds 94&ndash;101&mdash;a 1.62&times; reduction. To reach 0.999, <strong>no first-order schedule succeeds within the swept budget</strong>, while the antithetic and symmetric schedules reach it at 203 and 188 rotations. Because the convergence rates differ, the matched-cost gap widens with budget.</p>
+  <p class="note">To reach fidelity 0.99 the best first-order ordering needs 315 rotations, the antithetic schedule 236 and the symmetric schedule 225&mdash;a 1.40&times; reduction. To reach 0.999, <strong>no first-order schedule succeeds within the swept budget</strong>, while the antithetic and symmetric schedules reach it at 315 and 300 rotations. Because the convergence rates differ, the matched-cost gap widens with budget.</p>
+
+  <h3 style="margin:26px 0 8px">Size independence via a matrix-free Krylov reference</h3>
+  <p class="note">A dense matrix exponential is tractable only to modest $n$. A matrix-free Krylov reference, cross-checked against dense <code>expm</code> to $10^{-9}$, extends the exact benchmark to $n=14$ qubits. Across $n\in\{4,\dots,14\}$ the fitted rates stay at $\approx1.94$ (first-order) and $\approx4.06$ (antithetic), so the order doubling is size-independent, and the matched-cost speedup reaches <strong>2.06&times;</strong> at $n=14$.</p>
 
   <h3 style="margin:26px 0 8px">Ordering is impotent; folding is learnable</h3>
-  <p>Sampling orderings per instance and forming the exact leading-error spectral norm, a median ordering sits within a factor <strong>1.085</strong> of the per-instance minimum and the coefficient ordering within 1.067; the fully matrix-free Hilbert&ndash;Schmidt surrogate moves within 1.009. On the transverse-field Ising and Heisenberg families <strong>every</strong> anticommuting edge maps to a distinct Pauli string, so the leading error is exactly ordering-invariant; only the dense molecular-like family has any ordering-reducible part (96% invariant). The interpretable router exploits exactly this structure: trained leave-one-instance-out it attains <strong>85%</strong> accuracy against the per-instance oracle and recovers near-oracle gate efficiency, routing fast-forwardable instances to the cheap first-order schedule and hard instances to a fold.</p>
+  <p>Sampling orderings per instance and forming the exact leading-error spectral norm, a median ordering sits within a factor <strong>1.097</strong> of the per-instance minimum and the coefficient ordering within 1.074; the fully matrix-free Hilbert&ndash;Schmidt surrogate moves within 1.004, and the worst single instance reaches only 1.92. On the transverse-field Ising and Heisenberg families <strong>every</strong> anticommuting edge maps to a distinct Pauli string, so the leading error is exactly ordering-invariant; only the dense molecular-like family has any ordering-reducible part (0.98 invariant). The interpretable router exploits exactly this structure: trained leave-one-instance-out it attains <strong>93%</strong> accuracy against the per-instance oracle and recovers near-oracle gate efficiency&mdash;on the 92 instances where every fixed schedule reaches the target it needs 114.0 rotations on average against the oracle's 112.4&mdash;routing fast-forwardable instances to the cheap first-order schedule and hard instances to a fold.</p>
 </section>
 
 <section id="demo">
   <h2>Interactive Convergence Demonstration</h2>
-  <p class="lead">A self-contained, client-side statevector simulation that reproduces the paper's central figure in real time: first-order schedules collapse onto a single $\propto r^{-2}$ line (the visual proof of impotence), while the antithetic schedule&mdash;at the identical rotation count&mdash;follows $\propto r^{-4}$. It illustrates the proven behaviour on single instances; it is not a re-run of the 120-instance benchmark.</p>
+  <p class="lead">A self-contained, client-side statevector simulation that reproduces the paper's central figure in real time: first-order schedules collapse onto a single $\propto r^{-2}$ line (the visual proof of impotence), while the antithetic schedule&mdash;at the identical rotation count&mdash;follows $\propto r^{-4}$. It illustrates the proven behaviour on single instances; it is not a re-run of the 144-instance benchmark.</p>
   <div class="demo-shell">
     <div class="demo-grid">
       <div class="ctrls">
@@ -286,21 +288,32 @@
   <h2>Significance and Boundaries</h2>
   <p class="lead">Why a matched-cost schedule matters, with the study's limits held in full view.</p>
   <p>For first-order formulas the schedule is genuinely free&mdash;it changes no gate, qubit, or depth count&mdash;so the difference between an $O(t^2/r)$ and an $O(t^3/r^2)$ method at fixed cost is the difference between reaching and not reaching a target, as the unreachable $0.999$ column above shows. The commutator graph supplies both halves of the recommendation at no extra cost: it certifies when ordering cannot help, and its clique colouring tells the learned router which instances to fold and which to leave alone. The mechanism, palindromic symmetrization, is classical (Suzuki 1991); the contribution is the framing&mdash;that the lever is the schedule, that a fixed ordering provably cannot realize it&mdash;together with the matched-cost quantification and the learned selector.</p>
-  <p>The boundaries are stated, not omitted. <strong>(i)</strong> The second-order advantage is a small-step-size effect with an honest crossover: at coarse steps the antithetic fold can be worse than a good first-order ordering. <strong>(ii)</strong> Systems are small ($n\le 8$) because an exact statevector reference must be formed; the convergence-rate argument is, however, size-independent. <strong>(iii)</strong> Families are synthetic/structured proxies, not production mapped molecular Hamiltonians. <strong>(iv)</strong> Cost is the realised rotation count, ignoring rotation synthesis and connectivity. <strong>(v)</strong> All results are classical CPU statevector simulations with no hardware validation, single-author. What is offered is a clean, reproducible characterization of a free, second-order schedule and a proof that a single ordering cannot match it&mdash;not a claim of hardware advantage.</p>
+  <p>The boundaries are stated, not omitted. <strong>(i)</strong> The second-order advantage is a small-step-size effect with an honest crossover: at coarse steps the antithetic fold can be worse than a good first-order ordering. <strong>(ii)</strong> Systems are bounded ($n\le 14$) because an exact statevector or Krylov reference must be formed; the convergence-rate argument is, however, size-independent. <strong>(iii)</strong> Families are synthetic/structured proxies, not production-mapped molecular Hamiltonians. <strong>(iv)</strong> Cost is the realised rotation count, ignoring rotation synthesis and connectivity. <strong>(v)</strong> All results are classical CPU statevector simulations with no hardware validation, single-author. What is offered is a clean, reproducible characterization of a free, second-order schedule and a proof that a single ordering cannot match it&mdash;not a claim of hardware advantage.</p>
 </section>
 
 <section id="repro">
   <h2>Reproducibility</h2>
   <p class="lead">A pip-installable artifact and an audited path from a clean checkout to the identical numbers.</p>
-  <p>The package <code>topoham</code> (CPU-only; numpy / scipy / networkx / scikit-learn / matplotlib) lives at <code>submission/code</code> behind a single end-to-end entry point. Every reported number flows from one authoritative artifact, <code>results/summary.json</code>, and is generated into LaTeX macros and table fragments that the manuscript inputs directly. Two integrity gates enforce the discipline before any number is emitted: the fast Pauli-rotation kernel is cross-checked against dense <code>scipy.linalg.expm</code> to $10^{-9}$, and the matrix-free commutator error form is cross-checked against the dense pair-commutator sum to $10^{-9}$.</p>
-  <pre><span class="c"># From the repository root</span>
-cd submission/code
-pip install .         <span class="c"># installs the topoham package (CPU-only)</span>
-make test             <span class="c"># Pauli kernel (1e-9), error-form (1e-9), antithetic 2nd-order, clique exactness</span>
+  <p>The package (pip distribution <code>specops-cgs</code>, import name <code>topoham</code>; CPU-only; numpy / scipy / networkx / scikit-learn / matplotlib) lives at <code>submission/code</code> behind a single end-to-end entry point. Every reported number flows from one authoritative artifact, <code>results/summary.json</code>, and is generated into LaTeX macros and table fragments that the manuscript inputs directly. Three integrity gates enforce the discipline before any number is emitted: the fast Pauli-rotation kernel is cross-checked against dense <code>scipy.linalg.expm</code> to $10^{-9}$; the matrix-free commutator error form is cross-checked against the dense pair-commutator sum to $10^{-9}$; and the matrix-free Krylov reference is cross-checked against dense <code>expm</code> to $10^{-9}$.</p>
+  <pre><span class="c"># From submission/code</span>
+pip install specops-cgs   <span class="c"># or: pip install .  (CPU-only)</span>
+make test                 <span class="c"># Pauli kernel (1e-9), error-form (1e-9), antithetic 2nd-order, clique exactness</span>
 export KMP_DUPLICATE_LIB_OK=TRUE
-topoham-reproduce --config configs/full.yaml   <span class="c"># summary.json, macros, tables, figures</span>
-make audit            <span class="c"># readiness gate: traceable numbers, integrity flags, no forbidden claims</span></pre>
-  <p class="note">The run is fully determined by seeded draws; the reported scale (<code>configs/full.yaml</code>) is 120 instances across three families and five sizes $n\in\{4,\dots,8\}$ with eight seeds each, time $t=1.0$, step grid $\{1,2,4,6,8,12,16,24\}$. Runtime and memory are logged per benchmark, and all experiments run on commodity CPU hardware. The interactive demonstration above re-implements the same exact single-Pauli rotation in vanilla JavaScript, so the math on this page matches the math in the package.</p>
+cgs-reproduce --config configs/full.yaml   <span class="c"># summary.json, macros, tables, figures</span>
+make audit                <span class="c"># readiness gate: traceable numbers, integrity flags, no forbidden claims</span></pre>
+  <p class="note">The run is fully determined by seeded draws; the reported scale (<code>configs/full.yaml</code>) is 144 instances across three families and six sizes $n\in\{4,6,8,10,12,14\}$ with eight seeds each, time $t=1.0$, step grid $\{1,2,4,6,8,12,16,24\}$, using the matrix-free Krylov reference backend. Runtime and memory are logged per benchmark, and all experiments run on commodity CPU hardware. The interactive demonstration above re-implements the same exact single-Pauli rotation in vanilla JavaScript, so the math on this page matches the math in the package.</p>
+</section>
+
+<section id="cite">
+  <h2>Cite this work</h2>
+  <p class="lead">If you use this software or its results, please cite the manuscript.</p>
+  <pre><span class="c">% BibTeX</span>
+@article{huynh2026topoham,
+  title   = {Zero-Overhead Cancellation of the Leading Trotter Error via Commutator-Graph Scheduling},
+  author  = {Huynh, Molena},
+  year    = {2026},
+  note    = {Part of the spectral-truncation operators (SpecOps) program},
+}</pre>
 </section>
 
 <section id="references">
@@ -334,8 +347,8 @@ make audit            <span class="c"># readiness gate: traceable numbers, integ
 </main>
 
 <footer>
-  Beyond Term Ordering: Commutator-Graph Schedules Cancel the Leading Trotter Error at a Fixed Gate Budget &middot; Molena Huynh &middot; North Carolina State University &middot; <a href="mailto:molena.huynh@jmp.com">molena.huynh@jmp.com</a> &middot;
-  manuscript prepared for <em>Nature Machine Intelligence</em>. Numbers generated from <code>results/summary.json</code>; no value entered by hand.
+  Zero-Overhead Cancellation of the Leading Trotter Error via Commutator-Graph Scheduling &middot; Molena Huynh &middot; North Carolina State University &middot; <a href="mailto:molena.huynh@jmp.com">molena.huynh@jmp.com</a> &middot;
+  manuscript prepared for <em>Physical Review Research</em>. Numbers generated from <code>results/summary.json</code>; no value entered by hand.
 </footer>
 
 <script>
